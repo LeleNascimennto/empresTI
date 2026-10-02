@@ -1,0 +1,14 @@
+{
+  "name": "empres-ti",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "db:seed": "prisma generate && node --env-file=.env prisma/seed.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3"
+  },
+  "devDependencies": {
+    "prisma": "6.19.3"
+  }
+}

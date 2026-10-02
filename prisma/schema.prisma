@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum MembershipRole {
+  ADMIN
+  COLLABORATOR
+
+  @@map("membership_role")
+}
+
+enum EquipmentCondition {
+  AVAILABLE
+  MAINTENANCE
+
+  @@map("equipment_condition")
+}
+
+model Tenant {
+  id          String       @id @default(uuid()) @db.Uuid
+  slug        String       @unique
+  memberships Membership[]
+  equipment   Equipment[]
+  loans       Loan[]
+  auditLogs   AuditLog[]
+
+  @@map("tenants")
+}
+
+model Membership {
+  tenantId  String         @map("tenant_id") @db.Uuid
+  userId    String         @map("user_id") @db.Uuid
+  role      MembershipRole @default(COLLABORATOR)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@id([tenantId, userId])
+  @@map("memberships")
+}
+
+model Equipment {
+  id              String             @id @default(uuid()) @db.Uuid
+  tenantId        String             @map("tenant_id") @db.Uuid
+  assetTag        String             @map("asset_tag")
+  name            String
+  category        String
+  conditionStatus EquipmentCondition @default(AVAILABLE) @map("condition_status")
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  loans           Loan[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, assetTag])
+  @@map("equipment")
+}
+
+model Loan {
+  id             String     @id @default(uuid()) @db.Uuid
+  tenantId       String     @map("tenant_id") @db.Uuid
+  equipmentId    String     @map("equipment_id") @db.Uuid
+  borrowerUserId String     @map("borrower_user_id") @db.Uuid
+  checkedOutAt   DateTime   @default(now()) @map("checked_out_at") @db.Timestamptz(6)
+  dueAt          DateTime   @map("due_at") @db.Timestamptz(6)
+  returnedAt     DateTime?  @map("returned_at") @db.Timestamptz(6)
+  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  equipment      Equipment  @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, borrowerUserId, returnedAt])
+  @@index([tenantId, dueAt])
+  @@map("loans")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  actorUserId  String   @map("actor_user_id") @db.Uuid
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String   @map("resource_id")
+  metadata     Json     @default("{}") @db.JsonB
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, createdAt])
+  @@map("audit_logs")
+}
