@@ -1,318 +1,414 @@
-# AGENTS.md — EmpresTI
+# AGENTS.md — EmpresTI (FutureEmpresTI)
 
-Instruções para agentes de IA que trabalham neste repositório.
-
-Todo o conteúdo abaixo tem origem em três arquivos que já existiam aqui:
-`docs/PRD.md`, `docs/adr/001-stack.md` e `layout.md`. Cada seção indica a fonte.
-Este documento **não** preenche lacuna: o que esses arquivos não respondem está
-na seção 13 como pergunta pendente, sem resposta inventada.
+Guia operacional para agentes de IA que trabalham neste repositório.
+Leia este arquivo antes de editar código ou propor mudanças estruturais.
 
 ---
 
-## 1. O que é o sistema
+## 1. O produto
 
-(fonte: `docs/PRD.md`)
+**EmpresTI** substitui a planilha de controle de equipamentos internos (notebooks,
+monitores, cabos, câmeras). Colaboradores pedem e devolvem itens; Operações
+cadastra equipamentos e acompanha empréstimos em aberto.
 
-Controle de empréstimo de equipamentos internos — notebooks, monitores, cabos,
-câmeras. Hoje isso é uma planilha compartilhada: ninguém sabe o que está
-disponível, itens somem, e a devolução só é registrada se alguém lembrar de
-atualizar a linha.
+### Personas
 
-Dois papéis de uso:
-
-- **Colaborador** — vê o catálogo, pede um item emprestado, devolve.
-- **Operações** — cadastra equipamentos, vê quem está com o quê e registra
-  devolução no balcão.
-
-Critério de sucesso da v1: Operações consegue abandonar a planilha depois de
-duas semanas de uso.
-
-## 2. Escopo da primeira versão
-
-(fonte: `docs/PRD.md`)
-
-O que precisa existir:
-
-1. Login. Cada pessoa vê os próprios empréstimos.
-2. Catálogo de equipamentos com a situação de cada um.
-3. Solicitar empréstimo de um item disponível.
-4. Devolver um item que está comigo.
-5. Tela de Operações com todos os empréstimos em aberto.
-
-Regras que Operações já decidiu:
-
-- Cada pessoa pode estar com no máximo **3 itens** ao mesmo tempo.
-- O prazo padrão de devolução é de **14 dias**.
-- Quem tem item em atraso **não** pode pegar outro emprestado.
-- Equipamento em manutenção **não** aparece como disponível.
-
-Fora desta versão: reserva com data futura, notificação por e-mail e importação
-da planilha atual. `layout.md` §9.5 repete que essas três não devem nem ser
-desenhadas.
-
-## 3. Stack e arquitetura
-
-(fonte: `docs/adr/001-stack.md`)
-
-| Item | Decisão |
+| Persona | O que faz na v1 |
 |---|---|
-| Arquitetura | Monolito; front e servidor no mesmo projeto Next.js (App Router) |
-| Repositório | Único; um projeto na Vercel |
-| Camada de servidor | Route Handlers do Next, sem servidor separado |
-| Linguagem | TypeScript em modo `strict` |
-| Renderização | Client Components como padrão para telas com dados |
+| **Colaborador** | Login, catálogo, solicitar empréstimo, devolver item, ver os próprios empréstimos |
+| **Operações** | Cadastrar equipamentos, ver todos os empréstimos em aberto, registrar devolução no balcão |
+
+### Critério de sucesso do produto
+
+Operações consegue abandonar a planilha depois de duas semanas de uso real
+([docs/PRD.md](docs/PRD.md)).
+
+---
+
+## 2. Documentação e precedência
+
+| Documento | Papel |
+|---|---|
+| [docs/PRD.md](docs/PRD.md) | Comportamento de negócio e escopo da v1 |
+| [docs/adr/001-stack.md](docs/adr/001-stack.md) | Stack, padrões técnicos e decisões irreversíveis |
+| [layout.md](layout.md) | Design system Nocturne, telas, rotas e copy |
+| [docs/perguntas-prd.md](docs/perguntas-prd.md) | Ambiguidades ainda não decididas pelo time |
+| [rules/restrictions.md](rules/restrictions.md) | Limites rígidos do agente |
+| [rules/checks.md](rules/checks.md) | Verificação antes de declarar tarefa pronta |
+| [rules/migrations.md](rules/migrations.md) | Procedimento para mudança de schema (Prisma) |
+| [rules/secrets.md](rules/secrets.md) | Variáveis de ambiente e chaves Supabase/Prisma |
+
+**Ordem de precedência em conflito:**
+
+1. Segurança e isolamento de tenant (sempre prevalece)
+2. ADR-001 para decisões técnicas
+3. PRD para regras de negócio
+4. `layout.md` para interface
+5. Este `AGENTS.md` como síntese operacional
+
+Se algo estiver ambíguo no PRD, consulte `docs/perguntas-prd.md`. Se ainda
+não houver resposta, **pare e pergunte** — não invente comportamento.
+
+**Não escreva ADR.** Descreva a decisão e as alternativas e espere o time.
+
+---
+
+## 3. Regras de negócio (v1)
+
+Estas regras já foram decididas por Operações e devem aparecer no código e na UI:
+
+1. **Limite de 3 itens** — cada pessoa pode ter no máximo 3 empréstimos ativos
+   ao mesmo tempo.
+2. **Prazo de 14 dias** — devolução prevista calculada a partir da retirada.
+3. **Atraso bloqueia** — quem tem item em atraso não pode solicitar outro.
+4. **Manutenção invisível** — equipamento em manutenção não aparece como
+   disponível no catálogo.
+
+### Funcionalidades obrigatórias na v1
+
+1. Login (cadastro fechado, somente por convite de administrador)
+2. Catálogo com situação de cada equipamento
+3. Solicitar empréstimo de item disponível
+4. Devolver item que está comigo
+5. Tela de Operações com empréstimos em aberto
+
+### Fora de escopo na v1 (não implementar sem confirmação)
+
+- Reserva com data futura
+- Notificação por e-mail
+- Importação da planilha atual
+- Qualquer feature não listada no PRD
+
+---
+
+## 4. Stack
+
+Monólito Next.js com App Router, TypeScript `strict`, tRPC, Prisma,
+PostgreSQL (Supabase), Supabase Auth, TanStack Query, React Hook Form +
+zodResolver, Tailwind CSS, shadcn/ui.
+
+| Camada | Escolha |
+|---|---|
+| API | tRPC em `app/api/trpc/[trpc]/route.ts` |
+| Organização | Por domínio: `src/server/api/routers/<dominio>.ts` |
+| Camadas de código | Router (procedimento) → Service → Prisma |
 | Estado de servidor | TanStack Query via `@trpc/react-query` |
-| Estado de cliente | `useState` e Context; sem biblioteca de store |
-| Formulários | React Hook Form + `zodResolver` |
-| Estilização | Tailwind CSS |
-| Componentes | shadcn/ui (componente copiado para o repositório) |
-| Padrão de API | tRPC |
-| Endpoint | Route Handler em `app/api/trpc/[trpc]/route.ts` |
-| Organização | `src/server/api/routers/<dominio>.ts`, um router por domínio |
-| Camadas | Router (procedimento) → Service → Prisma |
-| Validação de entrada | Zod no `.input()` de todo procedimento |
+| Estado de cliente | `useState` / Context — sem Redux/Zustand |
 | Serialização | superjson |
-| Contexto de request | Sessão, `tenant_id`, `role` e cliente Prisma montados no `createContext` |
-| Server Actions | Não usadas |
-| Fonte da verdade | O `AppRouter` do tRPC |
-| Consumo no cliente | `RouterInputs` e `RouterOutputs` inferidos, sem tipo escrito à mão |
-| Versionamento | Nenhum |
-| Formato de erro | `TRPCError` com código, tratado por `errorFormatter` |
-| Paginação de listas | Cursor, via `useInfiniteQuery` |
-| Consumidor externo | Fora de escopo |
-| Tempo real | Fora de escopo |
+| Testes | Vitest + Testing Library + Testcontainers (Postgres real) |
+| E2E | Playwright para fluxos críticos de interface |
+| Deploy | Vercel (Hobby), um projeto |
+| CI | GitHub Actions — `prisma migrate deploy` antes do deploy |
 
-O ADR explica as escolhas com estas razões, entre outras: um caminho só de
-leitura e um caminho só de mutação são mais fáceis de auditar; a regra de
-negócio no service é o que dá para testar sem montar contexto de tRPC; um
-router por domínio mantém a feature inteira junta.
+Detalhes completos: [docs/adr/001-stack.md](docs/adr/001-stack.md).
 
-## 4. Dados, multi-tenancy e migrations
+---
 
-(fonte: `docs/adr/001-stack.md`)
+## 5. Estrutura de pastas (alvo)
 
-| Item | Decisão |
+O repositório pode ainda não ter todo o scaffold. Ao criar ou estender código,
+siga esta organização:
+
+```
+app/
+  api/trpc/[trpc]/route.ts    # endpoint tRPC
+  (login)/                    # rotas públicas
+  (app)/                      # rotas autenticadas
+src/
+  server/
+    api/
+      routers/                # um router por domínio (equipamentos, emprestimos…)
+      root.ts                 # AppRouter
+      trpc.ts                 # createContext, procedures, middlewares
+    services/                 # regras de negócio testáveis
+    db.ts                     # singleton Prisma
+  components/                 # UI reutilizável (shadcn + composições)
+  lib/                        # utilitários, validação compartilhada
+prisma/
+  schema.prisma
+  migrations/
+  seed.ts                     # idempotente; cria tenant suporte_ti
+```
+
+**Rotas de interface** (de [layout.md](layout.md)):
+
+| Rota | Tela |
 |---|---|
-| Banco | PostgreSQL gerenciado pelo Supabase, região `sa-east-1` (São Paulo) |
-| ORM | Prisma |
-| Dono do schema | Prisma Migrate (dono único; Supabase CLI não gerencia migrations) |
-| RLS, policies e triggers | SQL bruto dentro das migrations do Prisma |
-| Modelo | Tenant discriminado por coluna, banco único |
-| Coluna | `tenant_id` em toda tabela de domínio |
-| Vínculo usuário–tenant | Tabela `memberships (user_id, tenant_id, role)` |
-| Primeiro tenant | `suporte_ti`, criado no seed |
-| Origem do tenant | Resolvido no `createContext` a partir da sessão, **nunca** do input |
-| Aplicação do filtro | `tenantProcedure` injeta o `tenant_id` no service |
-| Instância do Prisma | Singleton global, para sobreviver ao hot reload |
-| Conexão de runtime | Supavisor, porta 6543, `?pgbouncer=true&connection_limit=1` |
-| Conexão de migration | `directUrl`, porta 5432 |
-| Seed | `prisma/seed.ts`, idempotente |
-| RLS | Habilitado em todas as tabelas, deny by default |
-| Papel do RLS | Defesa em profundidade, não autorização primária |
-| Auditoria | Tabela append-only com ator, tenant, ação e recurso |
+| `/login` | Login |
+| `/catalogo` | Catálogo |
+| `/catalogo/:patrimonio` | Detalhe do item |
+| `/meus-emprestimos` | Meus empréstimos |
+| `/operacoes/emprestimos` | Empréstimos em aberto |
+| `/operacoes/equipamentos/novo` | Cadastrar equipamento |
 
-Razões registradas no ADR que afetam o dia a dia: tabela sem `tenant_id` não tem
-como ser protegida por policy; se o cliente manda o tenant no input, trocar o
-valor é toda a exploração necessária; a autorização acontece no servidor porque o
-Prisma conecta com um role dono das tabelas e **bypassa RLS por padrão**.
+---
 
-## 5. Autenticação e autorização
+## 6. Padrões de código
 
-(fonte: `docs/adr/001-stack.md`)
+### tRPC
 
-| Item | Decisão |
+- **Fonte da verdade:** o `AppRouter`; tipos inferidos com `RouterInputs` /
+  `RouterOutputs` — nunca redeclarar tipos de resposta à mão.
+- **Validação:** Zod em todo `.input()`; regra de negócio no service, não no
+  procedimento além de permissão e orquestração.
+- **Erros:** `TRPCError` com código padronizado; tratados pelo `errorFormatter`.
+- **Paginação:** cursor via `useInfiniteQuery` — não usar offset.
+- **Procedimentos de domínio:** sempre passar por middleware de tenant.
+
+### Middlewares de autorização (encadeados)
+
+| Middleware | Garante |
 |---|---|
-| Provedor de identidade | Supabase Auth, e-mail e senha |
-| Cadastro | Fechado, somente por convite de administrador |
-| Integração com o Next | `@supabase/ssr` |
-| Sessão no navegador | Cookie `httpOnly`, escrito pelo `@supabase/ssr` |
-| Renovação de sessão | Middleware do Next em toda rota |
-| Autorização | Middlewares do tRPC: `protectedProcedure`, `tenantProcedure`, `adminProcedure` |
+| `protectedProcedure` | Usuário autenticado |
+| `tenantProcedure` | Membership no tenant; injeta `tenant_id` no contexto |
+| `adminProcedure` | Papel de administrador no tenant |
 
-## 6. Limites de plataforma e de execução
+Permissão e tenant vêm do **contexto do request** (`createContext`), nunca do
+input do cliente.
 
-(fonte: `docs/adr/001-stack.md`)
+### Services
 
-| Item | Decisão |
-|---|---|
-| Hospedagem | Vercel, um projeto |
-| Plano | Hobby |
-| Região das functions | Padrão do Hobby (Estados Unidos) |
-| Limite de execução | 60s por request |
-| Fila e agendamento | Fora de escopo; tudo roda dentro do request |
-| CI | GitHub Actions |
-| Migration em deploy | `prisma migrate deploy` em job do GitHub Actions, antes do deploy |
-| Configuração | Variáveis de ambiente validadas com Zod no boot |
-| Log | Log estruturado em JSON, com `request_id` e `tenant_id` |
-| Rastreamento de erro | Sentry |
-| Cabeçalhos HTTP | Configurados em `next.config.js` |
-| CSP | Restritiva, sem `unsafe-inline` |
-| Rate limit | Por IP e por usuário, com contador no Postgres |
-| Segredos | Environment variables da Vercel; nada com prefixo `NEXT_PUBLIC_` |
-| `service_role` key do Supabase | Somente em código de servidor |
+- Contêm regras de negócio testáveis sem montar HTTP.
+- Recebem `tenant_id` já resolvido pelo procedimento.
+- Toda query/mutation de domínio filtra por `tenant_id`.
+- Exemplos de regras: limite de 3 itens, bloqueio por atraso, status de
+  equipamento.
 
-Consequências que o ADR já aceitou e que restringem o desenho de qualquer
-operação: importação e relatório grande precisam caber em 60s, ou seja, ser
-desenhados em lotes; envio de e-mail e integração externa seguram a resposta do
-request; não há WebSocket na Vercel e atualização de tela é polling do TanStack
-Query; migration não roda no boot, porque em serverless várias instâncias sobem
-em paralelo e tentariam migrar ao mesmo tempo.
+### Prisma e banco
 
-## 7. Interface
+- **Dono do schema:** Prisma Migrate — único caminho de migration.
+  Procedimento completo: [rules/migrations.md](rules/migrations.md).
+- **RLS, policies, triggers:** SQL bruto dentro das migrations do Prisma.
+- **RLS:** habilitado em todas as tabelas, deny by default; defesa em
+  profundidade, **não** autorização primária (Prisma bypassa RLS por padrão).
+- **Conexão runtime:** Supavisor, porta 6543, `?pgbouncer=true&connection_limit=1`.
+- **Conexão migration:** `directUrl`, porta 5432.
+- **Seed:** `prisma/seed.ts`, idempotente; primeiro tenant: `suporte_ti`.
+- **Não** usar Supabase CLI como dono de schema.
 
-(fonte: `layout.md`)
+### O que não fazer (arquitetura)
 
-- Base visual: design system **Nocturne** adaptado à primária `#001449`.
-  **Somente modo escuro** — não existe modo claro nem alternador de tema.
-- A cor de ação visível é `#5B7FE0`; a primária `#001449` é usada como fundo
-  profundo, não como texto nem preenchimento de botão.
-- Ações primárias são contornadas (borda de 1px + fundo transparente), nunca
-  preenchidas com cor sólida.
-- Tipografia: Open Sans (400/500/600/700), fallback `system-ui, sans-serif`;
-  nunca 700 em títulos.
-- Ícones: Phosphor (regular e fill).
-- Espaçamento: `flex`/`grid` + `gap` em todos os grupos de irmãos, nunca margem
-  individual nem espaço por whitespace.
-- Telas especificadas: 01 Login, 02 Catálogo, 03 Detalhe do item,
-  04 Meus empréstimos, 05 Operações (empréstimos em aberto), 06 Operações
-  (cadastrar equipamento).
-- Rotas indicadas no `layout.md` §7: `/login`, `/catalogo`,
-  `/catalogo/:patrimonio`, `/meus-emprestimos`, `/operacoes/emprestimos`,
-  `/operacoes/equipamentos/novo`.
-- Navegação: sidebar fixa de 236px com dois grupos rotulados — **Colaborador**
-  (Catálogo, Meus empréstimos) e **Operações** (Empréstimos em aberto, Cadastrar
-  equipamento). Operações é seção do mesmo app, não app separado.
-- Idioma da interface e do conteúdo: português do Brasil. Tom de copy seco e
-  operacional — frases curtas, sem exclamação, sem emoji. Datas no formato
-  `dd/mmm` (`14/set`).
-- Animações discretas, nada acima de 240ms, nada que se mova sozinho, e
-  `prefers-reduced-motion` respeitado.
-- As regras de negócio com reflexo visual estão em `layout.md` §9 (contador
-  "2 de 3", prazo de 14 dias, atraso bloqueando com botão desabilitado,
-  manutenção fora do catálogo).
+- Server Actions para mutação
+- Server Components buscando dado direto no Prisma (dois caminhos de leitura)
+- Cliente Supabase no browser para acesso a dados de domínio
+- Bibliotecas fora do ADR-001 sem proposta e aprovação
+- Mock do Prisma para testar constraint, transação, cascade ou RLS
 
-**Conflito não resolvido nos arquivos:** `layout.md` §10 pede estilos **inline**
-no template do componente, com o único CSS global permitido sendo `@font-face`/
-import de fonte, `@keyframes` e reset de `body` — e cita o design system Nocturne
-carregado de `_ds/nocturne-<id>/styles.css` + `_ds_bundle.js`. O ADR-001 define
-**Tailwind CSS + shadcn/ui**. Os dois não cabem juntos sem uma decisão que
-nenhum arquivo toma. Ver item 7 da seção 13.
+---
 
-## 8. Testes
+## 7. Multi-tenancy
 
-(fonte: `docs/adr/001-stack.md`)
+Modelo lógico: coluna `tenant_id` em toda tabela de domínio, banco único.
 
-| Item | Decisão |
-|---|---|
-| Runner | Vitest, único para servidor e componentes |
-| Componentes | Testing Library |
-| Integração de banco | Testcontainers com Postgres real |
-| Teste de procedimento | `createCaller` do tRPC, chamando o router direto |
-| E2E de interface | Playwright |
-| Teste obrigatório de isolamento | Um caso por procedimento: tenant A não enxerga dado de tenant B |
-| Meta de cobertura | Sem percentual; caminhos críticos obrigatórios |
+- Vínculo usuário–tenant: tabela `memberships (user_id, tenant_id, role)`.
+- Tenant resolvido no `createContext` a partir da sessão.
+- `tenantProcedure` injeta o filtro — não depender de cada service lembrar
+  do `where: { tenantId }`.
+- **Teste obrigatório:** para cada procedimento de domínio, um caso em que
+  tenant A não enxerga dado de tenant B.
 
-Valem como decisão, não como sugestão: Prisma **não** é mockado (mockar testa o
-mock, e constraint, transação e policy de RLS só falham contra Postgres de
-verdade); `createCaller` monta o contexto à mão, incluindo sessão e tenant, sem
-subir servidor HTTP; o teste de isolamento existe porque vazamento entre tenants
-é a falha mais cara desse sistema e a mais fácil de introduzir sem perceber.
+---
 
-## 9. Convenções de código e de commit
+## 8. Autenticação
 
-(fonte: `docs/adr/001-stack.md`)
+- Supabase Auth com e-mail e senha.
+- Cadastro fechado (somente convite de administrador).
+- Integração: `@supabase/ssr`.
+- Sessão: cookie `httpOnly`, escrito pelo `@supabase/ssr`.
+- Middleware do Next renova sessão em toda rota.
 
-- Lint e formatação: ESLint + Prettier, uma config só para o repositório.
-- Hook de pré-commit: lint-staged + husky, **apenas lint e formatação**.
-- Convenção de commit: **nenhuma automação** — a mensagem é escrita pela pessoa.
-  Não foi adotado commitlint.
+---
 
-## 10. Decisões fechadas (alternativas já descartadas)
+## 9. Interface (Nocturne)
 
-(fonte: `docs/adr/001-stack.md`, seção "Alternativas descartadas")
+Referência completa: [layout.md](layout.md).
 
-Alternativas que o ADR-001 descartou, com a razão de cada uma:
+Resumo para implementação:
 
-- Front e API em projetos separados; REST com OpenAPI gerado; GraphQL.
-- Server Actions para mutação; Server Components buscando dado direto no Prisma.
-- RLS como autorização primária; acesso a dado pelo cliente do Supabase em vez do
-  Prisma.
-- Cadastro aberto por e-mail; SSO corporativo (OIDC/SAML); sessão em
-  `localStorage` pelo `supabase-js`.
-- Supabase CLI como dono das migrations; CASL ou outra biblioteca de política.
-- Zustand ou Redux; biblioteca de componentes fechada (MUI, Mantine).
-- Fila (BullMQ, pg-boss); schema ou banco por tenant.
-- Prisma mockado nos testes.
+- **Somente modo escuro.** Não existe modo claro nem alternador de tema.
+- Primária `#001449` como fundo profundo; cor de ação visível `#5B7FE0`.
+- Botões primários **contornados** (borda + fundo transparente), nunca sólidos.
+- Fonte: Open Sans. Ícones: Phosphor (`@phosphor-icons/web`).
+- Layout: sidebar fixa 236px + main; `flex`/`grid` + `gap` — sem margens
+  individuais para espaçamento.
+- Copy: português BR, seco e operacional; datas `dd/mmm` (ex.: `14/set`).
+- Estados visíveis: Disponível, Emprestado, Manutenção, Atraso (cores em
+  `layout.md` §2.4).
+- Regras de negócio devem ser **visíveis na UI**: contador "2 de 3 itens",
+  barra de prazo, bloqueio de solicitação por atraso, etc.
 
-## 11. Estado atual do repositório
+---
 
-Conferido na árvore de trabalho no momento em que este arquivo foi escrito:
+## 10. Testes
 
-- Conteúdo existente: `README.md` (só o título `# empresTI`), `docs/PRD.md`,
-  `docs/adr/001-stack.md` e `layout.md`.
-- `.env` existe mas está **vazio** (0 bytes), e `.gitignore` também está vazio.
-- Não há `package.json`, `tsconfig.json`, `src/`, `prisma/` nem `.next/`: nenhum
-  código de aplicação foi criado ainda.
+| Tipo | Quando | Como |
+|---|---|---|
+| Service | Regra de negócio | Vitest, Postgres via Testcontainers |
+| Procedimento tRPC | Permissão, tenant, orquestração | `createCaller` com contexto montado |
+| Componente | UI com interação relevante | Vitest + Testing Library |
+| Isolamento de tenant | Todo procedimento de domínio | Tenant A vs tenant B |
+| E2E | Fluxos que travam operação | Playwright (login, empréstimo, devolução, cadastro) |
 
-Ou seja: as decisões do ADR-001 estão tomadas e documentadas, mas ainda não
-existem scripts nem comandos para rodar. É por isso que a seção 13 começa pelos
-comandos.
+Meta: caminhos críticos cobertos — não há meta de percentual de cobertura.
+Não escrever teste que só valida o mock.
 
-## 12. Checklist derivado das decisões já tomadas
+---
 
-Reafirmação do que está no ADR-001, útil na hora de revisar um procedimento novo:
+## 11. Variáveis de ambiente
 
-- [ ] O procedimento está no router do domínio, em
-      `src/server/api/routers/<dominio>.ts`.
-- [ ] A entrada passa por Zod no `.input()`.
-- [ ] A regra de negócio está no service, não no procedimento.
-- [ ] O `tenant_id` vem do `createContext` (sessão), nunca do input.
-- [ ] O procedimento usa um dos middlewares: `protectedProcedure`,
-      `tenantProcedure` ou `adminProcedure`.
-- [ ] A query filtra por `tenant_id`.
-- [ ] O retorno é tipado pelo `AppRouter` — nada de interface escrita à mão nem
-      de tipo duplicado em `RouterInputs`/`RouterOutputs`.
-- [ ] Lista usa paginação por cursor, compatível com `useInfiniteQuery`.
-- [ ] Erro sai como `TRPCError` com código.
-- [ ] Existe teste de isolamento do procedimento (tenant A não vê dado de B).
-- [ ] Migration com RLS/policy em SQL bruto, dentro do Prisma Migrate.
-- [ ] Nada de `NEXT_PUBLIC_` com segredo e nada de `service_role` em código que o
-      bundle do cliente alcança.
-- [ ] Nenhum import de cliente para dentro de código de servidor (a fronteira
-      servidor/cliente é fácil de cruzar por engano).
+Modelo em [.env.example](.env.example). Nunca versionar `.env`.
+Procedimento completo: [rules/secrets.md](rules/secrets.md).
 
-## 13. Lacunas em aberto
+| Variável | Onde roda | Observação |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Cliente | Público |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cliente | Público |
+| `DATABASE_URL` | Servidor | Pooler 6543 |
+| `DIRECT_URL` | Servidor (migrate) | Direto 5432 |
+| `SUPABASE_SERVICE_ROLE_KEY` | Servidor | **Nunca** `NEXT_PUBLIC_` |
+| `SENTRY_DSN` | Servidor | Quando Sentry estiver configurado |
 
-Os arquivos do repositório não respondem os pontos abaixo. Nada foi decidido
-aqui no lugar delas; cada item é uma pergunta pendente de resposta humana.
+Variáveis obrigatórias devem ser validadas com Zod no boot da aplicação.
 
-1. **Comandos e ambiente.** Não existe `package.json`, então não há script de
-   dev, build, lint, teste, migration ou seed para registrar, nem gerenciador de
-   pacotes definido (npm, pnpm ou yarn), nem scaffold do Next/tRPC/Prisma no
-   repositório. Falta saber onde o ambiente já configurado vive e quais comandos
-   valem.
-2. **Autonomia e limites de ação.** Até onde o agente pode ir sozinho: `git add`,
-   `git commit`, `git push`, criar branch, abrir PR; e o que ele nunca faz sem
-   pedido explícito (rodar `prisma migrate` contra banco remoto, trocar o `.env`,
-   apagar arquivo, instalar dependência).
-3. **Idioma e nomes no código.** Os documentos são em português do Brasil, mas o
-   ADR usa nomes como `tenant_id`, `memberships` e `role` em inglês, e o
-   `layout.md` define rotas em português. Falta a regra para nomes de entidade,
-   model Prisma, tabela, type, componente, arquivo e mensagem de commit.
-4. **Divergência com uma decisão fechada do ADR.** O que fazer quando a
-   implementação esbarrar numa decisão registrada (precisar de Server Action,
-   de uma biblioteca a mais, de RLS como autorização primária): parar e
-   perguntar, implementar e sinalizar como desvio, ou nunca desviar.
-5. **Pedido fora do escopo da v1.** Como reagir quando o pedido for reserva com
-   data futura, notificação por e-mail ou importação da planilha — recusar,
-   implementar mesmo assim, ou registrar para depois.
-6. **Definição de "pronto".** O que precisa ser executado e mostrado antes de
-   dizer que uma tarefa terminou (lint, testes, E2E, verificação no banco) e se
-   a revisão vem antes ou depois do commit.
-7. **Estilização.** `layout.md` §10 pede estilos inline no template, com CSS
-   global restrito a `@font-face`/import, `@keyframes` e reset de `body`, e cita
-   o design system Nocturne em `_ds/nocturne-<id>/styles.css` + `_ds_bundle.js`;
-   o ADR-001 define Tailwind CSS + shadcn/ui. Os dois caminhos são incompatíveis
-   e nenhum arquivo escolhe entre eles.
+---
 
+## 12. Setup local (quando o scaffold existir)
 
+1. Copiar `.env.example` → `.env` e preencher credenciais locais.
+2. `npm install`
+3. Subir Postgres local (Docker/Testcontainers ou instância de dev).
+4. `npx prisma migrate dev` (ou `migrate reset` para estado limpo).
+5. `npx prisma db seed`
+6. `npm run dev`
+
+**Não** alterar schema ou dados no Supabase remoto. Tudo de migration e seed
+acontece no ambiente local.
+
+Se `package.json` ou scripts ainda não existirem, diga o que falta configurar
+em vez de assumir que o ambiente está pronto.
+
+---
+
+## 13. Validação antes de declarar pronto
+
+Siga [rules/checks.md](rules/checks.md). Resumo:
+
+1. `npm test`
+2. `npx prisma migrate reset --force` (se tocou em schema/migration)
+3. `npm run lint`
+4. `npm run build`
+5. `git status --short` (sem `.env` ou arquivos fora do escopo)
+6. Informar qual item do PRD ou regra de negócio foi atendido
+
+Pronto = comandos aplicáveis passaram **e** git status limpo no escopo.
+Teste vermelho = tarefa não terminada, mesmo que o código "pare certo".
+
+---
+
+## 14. Git, PR e deploy
+
+- Trabalhar em branch; abrir PR para merge.
+- Não push direto na branch de produção.
+- Não rodar deploy nem alterar configuração da Vercel.
+- Não commitar `.env`, credenciais ou segredos.
+- Só criar commit quando o usuário pedir explicitamente.
+- Migrations em produção: `prisma migrate deploy` via GitHub Actions, antes
+  do deploy (conforme ADR).
+
+---
+
+## 15. Objetivo e postura da IA
+
+### Foco
+
+- Implementar features alinhadas ao PRD
+- Corrigir bugs e regressões
+- Manter isolamento de tenant e segurança
+- Escrever testes nos caminhos críticos
+- Preservar a arquitetura do ADR
+
+### Autonomia moderada
+
+- Explicar brevemente o plano antes de editar
+- Preferir mudanças pequenas e focadas; refatorar quando for a melhor solução
+- Uma tarefa por vez; rodar checks antes de concluir
+- Propor bibliotecas ou mudanças arquiteturais — não implementar sem alinhamento
+
+### Fluxo obrigatório para toda tarefa
+
+Para toda solicitação que peça uma ação ou entrega — incluindo correções,
+features, interface, backend, testes, documentação, configuração, pesquisa ou
+manutenção — seguir esta ordem:
+
+1. Apresentar ao usuário um plano curto antes de iniciar a execução ou editar
+  arquivos. Informar escopo, áreas prováveis, critérios de aceite, validação e
+  tarefas em sequência, com detalhe proporcional ao tamanho da solicitação.
+2. Criar ou atualizar a spec como primeiro arquivo da tarefa, antes de alterar
+  os demais arquivos de entrega. Usar `spec/` como pasta padrão; reutilizar a
+  spec existente quando a solicitação for continuação do mesmo trabalho. Toda
+  spec deve registrar objetivo,
+  escopo, restrições e critérios de aceite. Incluir estados, comportamentos,
+  regras, responsividade, riscos ou validações quando forem pertinentes ao
+  tipo de tarefa. Specs de correções pequenas podem ser breves, mas não devem
+  ser omitidas.
+3. Depois da spec, decompor os critérios de aceite em tarefas e executá-las na
+  ordem planejada. A spec e o plano são preparação, não conclusão: não encerre
+  a solicitação sem executar o trabalho autorizado. Respeite a matriz de
+  autorização em [rules/operacao.md](rules/operacao.md); não peça confirmação
+  para ações classificadas como livres ou permitidas com aviso posterior.
+  Para interface, siga o Nocturne em [layout.md](layout.md). Se o pedido for
+  somente visual, não iniciar API, banco ou autenticação.
+4. Atualizar o progresso das tarefas durante a execução e validar cada critério
+  de aceite e check aplicável. Se uma aprovação, decisão ou dependência
+  realmente bloquear parte do trabalho, explique o bloqueio, não declare a
+  tarefa concluída e continue as partes independentes que estiverem autorizadas.
+5. Concluir somente quando todo o escopo aprovado estiver executado e validado;
+  relacionar entrega, critérios de aceite e resultados dos checks na resposta.
+
+Perguntas, brainstorming, pedidos de status e conversas sem uma entrega ou ação
+não exigem plano nem arquivo de spec. Se uma decisão necessária estiver
+ambígua, registre a dúvida na spec e pare para perguntar; não invente o
+comportamento. Não pule a spec por a tarefa parecer simples.
+
+### Limites rígidos
+
+Ver [rules/restrictions.md](rules/restrictions.md). Os mais críticos:
+
+- Não ignorar `tenant_id`
+- Não expor segredos
+- Não implementar fora do escopo v1
+- Não contradizer ADR ou PRD
+- Não tocar ambiente remoto (Supabase prod, Vercel prod)
+
+---
+
+## 16. Comunicação
+
+- Apresentar o plano breve antes de iniciar qualquer tarefa, conforme o fluxo
+  obrigatório da seção 15
+- Justificar decisões quando a mudança for ampla
+- Comunicar riscos (migration destrutiva, breaking change de API, etc.)
+- Respostas curtas e práticas
+- Ao concluir: tarefas executadas, o que mudou, checks e critérios atendidos;
+  se houver bloqueio, declarar que a tarefa não foi concluída
+
+---
+
+## 17. Handoff
+
+- Handoffs ficam exclusivamente na pasta [handoff](handoff/).
+- Antes de criar ou atualizar um handoff, o agente deve perguntar ao usuário se
+  ele deseja que o handoff seja criado ou atualizado.
+- O agente só pode criar ou atualizar o arquivo depois de receber confirmação
+  explícita.
+- O modelo de handoff está em [handoff/handoff.md](handoff/handoff.md).
+- Não criar handoff automaticamente ao concluir uma tarefa.
+
+---
+
+## 18. Valores do projeto
+
+Simplicidade arquitetural · segurança · isolamento de tenant · previsibilidade
+· qualidade operacional · um repositório · um deploy.
+
+A IA deve reforçar esses valores e nunca contradizer o PRD ou o ADR.

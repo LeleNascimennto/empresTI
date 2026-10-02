@@ -1,0 +1,68 @@
+---
+description: O que precisa passar antes de declarar uma tarefa pronta
+globs: []
+alwaysApply: true
+---
+
+# Verificação de fim de tarefa
+> leitor: agente · projeto EmpresTI (FutureEmpresTI)
+
+## Quando
+
+Depois de executar o escopo aprovado e antes de dizer "pronto", "implementado"
+ou "funcionando". Os checks são a etapa de validação final; não substituem o
+plano, a spec nem a implementação definidos em [rules/spec-flow.md](spec-flow.md).
+
+Se o projeto ainda não tiver `package.json` ou scripts configurados,
+declare o que falta configurar em vez de inventar sucesso.
+
+## Procedimento
+
+Execute na ordem abaixo o que existir no repositório:
+
+1. **Testes** — `npm test` (Vitest). Cole a última linha da saída na resposta.
+   - Se a tarefa tocou em procedimento tRPC de domínio, confirme que há
+     (ou manteve) teste de isolamento: tenant A não enxerga dado de tenant B.
+2. **Migration** — se a tarefa alterou schema: siga
+   [rules/migrations.md](migrations.md) e rode `npx prisma migrate reset --force`
+   local; confirme banco do zero com seed idempotente (`suporte_ti`).
+3. **Lint** — `npm run lint`. Deve terminar sem erro.
+4. **Build** — `npm run build`. Rode antes de qualquer push; build que quebra
+   na Vercel é o feedback mais lento e mais caro deste projeto.
+5. **Git** — `git status --short`. Só podem aparecer arquivos do escopo
+   da tarefa (nunca `.env` ou segredos).
+6. **Critério de aceitação** — diga qual item do PRD ou qual regra de negócio
+   a tarefa atende. Use a numeração de
+   [docs/PRD.md](../docs/PRD.md) ("O que precisa existir na primeira versão"
+   ou "Regras que Operações já decidiu").
+
+## Verificação
+
+Pronto = todos os comandos aplicáveis terminaram sem falha E o git status
+não trouxe surpresa, e todo o escopo aprovado e os critérios de aceite da spec
+foram executados. As três coisas, não uma.
+
+Se tarefas ou critérios permanecerem pendentes por um bloqueio real, não declare
+a solicitação pronta. Informe o bloqueio e o que já foi concluído; continue as
+partes independentes autorizadas conforme [rules/spec-flow.md](spec-flow.md).
+
+Tarefa só de documentação ou config sem scripts: valide coerência com PRD,
+ADR e layout, e informe explicitamente quais checks foram pulados e por quê.
+
+## Checklist de segurança (quando a tarefa tocar em API, auth ou banco)
+
+- [ ] `tenant_id` vem do contexto, nunca do input do cliente
+- [ ] Procedimentos de domínio passam por `tenantProcedure` (ou middleware
+      equivalente definido no ADR)
+- [ ] Nenhum segredo em arquivo versionado nem em variável `NEXT_PUBLIC_`
+- [ ] Validação de entrada via Zod no `.input()` do procedimento
+- [ ] Variável nova segue [rules/secrets.md](secrets.md) (`.env` ·
+      `.env.example` · Vercel)
+
+## Não faça
+
+- Nunca apresente trabalho parcial como concluído. Teste vermelho significa que
+   a tarefa não terminou: continue corrigindo; se houver bloqueio real, informe
+   que está incompleta e descreva o impedimento.
+- Não pule build ou lint "porque foi mudança pequena".
+- Não declare pronto sem mencionar qual critério do PRD foi atendido.
