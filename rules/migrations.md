@@ -71,7 +71,7 @@ Pronto só se:
   não versiona schema pelo Supabase CLI ([ADR-001](../docs/adr/001-stack.md)).
 - Não edite migration que já foi para o repositório remoto. Escreva a
   próxima.
-- Não toque no projeto Supabase remoto. Tudo acontece no banco local.
+- Não altere diretamente schema ou dados no Supabase remoto; mudanças de schema seguem o fluxo Prisma Migrate. Conexões de verificação e consultas de leitura são permitidas quando solicitadas.
 - Não crie tabela de domínio sem `tenant_id`.
 - Não confie só em RLS: todo service e procedimento tRPC deve filtrar
   por tenant mesmo com policy ativa.

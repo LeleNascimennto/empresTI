@@ -153,5 +153,5 @@ confirmação explícita. Depois da confirmação, use o modelo
 - Não continue buscando indefinidamente depois que o caminho local estiver
   identificado.
 - Não use mocks do Prisma para validar constraint, transação, cascade ou RLS.
-- Não altere ambiente remoto, Vercel ou Supabase.
+- Não rode deploy nem altere configuração da Vercel. Conexão de verificação e consultas de leitura ao Supabase são permitidas quando solicitadas; alterações de schema/dados seguem as regras de migrations.
 - Não crie commit sem solicitação explícita.

@@ -7,11 +7,13 @@ Modelar e implementar o schema de persistência mínimo para a v1 do EmpresTI, c
 - Mapear entidades, chaves, relações, estados e invariantes persistidas necessárias para usuários/memberships, equipamentos e empréstimos.
 - Registrar decisões ainda em aberto no PRD que afetam o modelo, incluindo ciclo de solicitação/retirada, histórico de devoluções e provisionamento por convite.
 - Produzir schema Prisma, migration PostgreSQL e seed local após resolver as decisões de negócio e obter aprovação do DDL.
+- A pedido explícito do usuário, verificar novamente a conexão e, se disponível, aplicar a migration inicial versionada ao Supabase remoto via Prisma Migrate.
 - Validar a proposta contra as regras de limite de 3 empréstimos ativos, prazo de 14 dias, bloqueio por atraso, manutenção e isolamento de tenant.
 
 ## Restrições
-- Não ler nem editar `.env`; não conectar a Supabase remoto nem alterar dados/estrutura remotos.
+- Não editar `.env`.
 - Prisma Migrate é o único dono de schema; a migration inicial foi criada após aprovação explícita do DDL pretendido.
+- Aplicar somente migrations versionadas com `prisma migrate deploy`; não executar SQL avulso, seed ou alterações manuais no banco remoto.
 - `tenant_id` é resolvido da sessão/contexto e não é confiado ao input do cliente.
 - Não incluir reserva futura, notificações por e-mail ou importação da planilha.
 - Não inventar comportamento para questões de negócio ainda sem resposta.
@@ -40,4 +42,5 @@ Modelar e implementar o schema de persistência mínimo para a v1 do EmpresTI, c
 - Ambiguidades que mudam cardinalidade, ciclo de vida ou retenção de dados são resolvidas com o usuário ou ficam explicitamente bloqueadas.
 - Regras de domínio têm representação persistente suficiente e limites de garantia identificados (constraint/transação/service).
 - O DDL/schema foi mostrado e aprovado antes da migration inicial.
-- Nenhum check ou execução de banco remoto é presumido; comandos aplicáveis são informados após o scaffold existir.
+- Conexão de verificação e consultas de leitura ao banco remoto podem ser executadas quando solicitadas. A aplicação da migration inicial só pode ocorrer com pedido explícito do usuário e pelo fluxo Prisma Migrate.
+- A tentativa usa exclusivamente a migration aprovada, verifica o status antes de aplicar e informa sucesso ou o bloqueio sem divulgar credenciais.

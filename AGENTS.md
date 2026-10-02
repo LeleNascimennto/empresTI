@@ -281,8 +281,10 @@ Variáveis obrigatórias devem ser validadas com Zod no boot da aplicação.
 5. `npx prisma db seed`
 6. `npm run dev`
 
-**Não** alterar schema ou dados no Supabase remoto. Tudo de migration e seed
-acontece no ambiente local.
+Conexões de verificação e consultas de leitura ao Supabase remoto são
+permitidas quando solicitadas. Não altere dados diretamente no remoto;
+mudanças de schema seguem o fluxo Prisma Migrate e a aprovação do projeto.
+O setup descrito acima continua direcionado ao ambiente local.
 
 Se `package.json` ou scripts ainda não existirem, diga o que falta configurar
 em vez de assumir que o ambiente está pronto.
@@ -378,7 +380,8 @@ Ver [rules/restrictions.md](rules/restrictions.md). Os mais críticos:
 - Não expor segredos
 - Não implementar fora do escopo v1
 - Não contradizer ADR ou PRD
-- Não tocar ambiente remoto (Supabase prod, Vercel prod)
+- Não alterar dados/schema diretamente no Supabase remoto nem fazer deploy ou
+  alterar configuração da Vercel de produção sem seguir os fluxos aprovados.
 
 ---
 

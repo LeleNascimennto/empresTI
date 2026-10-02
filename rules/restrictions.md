@@ -62,9 +62,8 @@ alwaysApply: true
 
 - Não faça push na branch de produção. Trabalhe em branch e abra PR.
 - Não rode deploy nem altere configuração da Vercel.
-- Não toque no projeto Supabase remoto: nada de SQL, alteração de schema
-  ou dado por lá. Migrations e seed rodam no ambiente local.
-- Não rode testes contra o banco remoto.
+- Testes de conectividade e consultas de leitura ao Supabase remoto são permitidos quando solicitados.
+- Não altere dados ou schema diretamente no Supabase; mudanças de schema continuam sujeitas ao fluxo Prisma Migrate e às aprovações do projeto.
 
 ## Precedência
 
