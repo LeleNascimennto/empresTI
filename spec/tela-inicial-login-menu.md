@@ -1,34 +1,44 @@
-# Spec: tela inicial, login e menu principal
+# Spec: revisão do protótipo de login e catálogo
 
 ## Objetivo
 
-Criar uma demonstração visual estática do EmpresTI com tela de login, tela
-inicial do aplicativo e menu principal, seguindo o design system Nocturne de
-`layout.md`.
+Revisar os textos e o acabamento visual do protótipo estático do EmpresTI,
+mantendo a linguagem operacional em português BR e alinhando cores e medidas
+com o Nocturne definido em `layout.md` e no ADR-002.
 
 ## Escopo
 
-- Criar `index.html` com as telas estáticas ligadas por âncoras.
-- Criar `styles.css` com os tokens visuais, responsividade e estados de foco/
-  hover necessários.
-- Exibir login, marca, navegação lateral, cabeçalho e resumo operacional da
-  tela inicial.
+- Revisar títulos, descrições, rótulos e mensagens em `index.html` para que
+  sejam consistentes, claros e operacionais.
+- Manter as telas de login e catálogo como demonstração estática: o botão
+  "Entrar" apenas navega ao catálogo e não autentica nem envia credenciais.
+- Substituir o símbolo atual da marca por um ícone de computador integrado ao
+  estilo visual existente.
+- Ajustar `styles.css` para usar tokens CSS coerentes com a paleta Nocturne,
+  preservando o layout existente e refinando legibilidade e responsividade.
 
 ## Restrições
 
-- Não implementar autenticação, JavaScript, API, banco, rotas reais ou ações de
-  negócio.
+- Não implementar autenticação, JavaScript, API, banco, rotas reais, busca ou
+  ações de negócio além da navegação demonstrativa do botão "Entrar".
+- A navegação demonstrativa não deve enviar valores de e-mail ou senha na URL
+  nem para um servidor.
 - Não criar dados sensíveis nem alterar schema/configuração do projeto.
-- Usar português BR e o padrão visual descrito em `layout.md`: modo escuro,
-  sidebar de 236px, botões contornados, cores Nocturne e espaçamento por gap.
+- Não adicionar dependências, imagens ou ilustrações nesta revisão.
+- Preservar o conteúdo demonstrativo e os exemplos de empréstimos existentes,
+  sem sugerir que os dados sejam dinâmicos.
+- Usar português BR e seguir ADR-002: modo escuro, tokens centralizados,
+  sidebar de 236px, botões contornados e espaçamento por gap.
 
 ## Critérios de aceite
 
-- A abertura de `index.html` apresenta a tela de login sem dependência de
-  servidor ou biblioteca externa obrigatória.
-- O formulário possui e-mail, senha e botão visual de entrada, sem submissão
-  funcional.
-- A tela inicial possui menu principal com grupos Colaborador e Operações,
-  item ativo, contador de empréstimos e resumo dos equipamentos.
-- As telas permanecem legíveis em viewport estreita, sem rolagem horizontal.
+- Textos visíveis estão em português BR, consistentes e sem prometer ações que
+  o protótipo não executa.
+- Acionar "Entrar" leva à tela inicial do catálogo; isso não autentica nem
+  transmite e-mail ou senha.
+- O ícone da marca representa um computador e tem nome acessível pela marca.
+- Cores e valores visuais recorrentes são expressos por tokens CSS; os
+  componentes mantêm o modo escuro e os botões contornados do Nocturne.
+- As telas preservam navegação, resumo e conteúdo do protótipo e continuam
+  legíveis em viewport estreita, sem rolagem horizontal.
 - `git diff --check` não aponta erros.
