@@ -155,3 +155,10 @@ confirmação explícita. Depois da confirmação, use o modelo
 - Não use mocks do Prisma para validar constraint, transação, cascade ou RLS.
 - Não rode deploy nem altere configuração da Vercel. Conexão de verificação e consultas de leitura ao Supabase são permitidas quando solicitadas; alterações de schema/dados seguem as regras de migrations.
 - Não crie commit sem solicitação explícita.
+
+## Antes de declarar uma spec pronta
+- Delegue ao subagente verificador-spec (agents/verificador-spec.md),
+  passando o caminho da spec e o intervalo de commits.
+- A spec só é pronta com "Veredito: PRONTA". Qualquer outro resultado
+  volta para as tarefas — quem corrige é o agente principal, nunca o
+  verificador.
