@@ -27,6 +27,12 @@ export async function updateSession(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
 
   let response = NextResponse.next({ request: { headers: requestHeaders } });
+  if (request.nextUrl.pathname === "/demo" || request.nextUrl.pathname.startsWith("/demo/")) {
+    response.headers.set("Content-Security-Policy", contentSecurityPolicy);
+    response.headers.set("x-nonce", nonce);
+    return response;
+  }
+
   const supabase = createServerClient(getSupabaseUrl(), getSupabasePublishableKey(), {
     cookies: {
       getAll() {
