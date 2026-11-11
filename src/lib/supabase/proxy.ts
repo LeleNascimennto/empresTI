@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/config";
+import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/config";
 
 function createContentSecurityPolicy(nonce: string) {
   return [
@@ -27,7 +27,7 @@ export async function updateSession(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
 
   let response = NextResponse.next({ request: { headers: requestHeaders } });
-  const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
+  const supabase = createServerClient(getSupabaseUrl(), getSupabasePublishableKey(), {
     cookies: {
       getAll() {
         return request.cookies.getAll();
