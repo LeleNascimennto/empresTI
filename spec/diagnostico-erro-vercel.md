@@ -51,3 +51,32 @@ Restaurar a validação Zod de `DATABASE_URL` e `DIRECT_URL` no primeiro uso da 
 
 ### Estado
 Implementada e validada localmente em 10/11/2026. `createTRPCContext()` chama `getEnv()` somente para usuário autenticado e antes de consultar `memberships`; importação de módulos continua sem validação eager. Typecheck, lint, build e `git diff --check` passaram. Testes não executados conforme escopo. Correção enviada para `chore/nocturne-layout-setup` no commit `0c1376a`; verificação Vercel iniciada e ainda pendente.
+
+## Continuação: alinhar diretório de build com Vercel
+
+### Objetivo
+Corrigir o erro `NEXT_OUTPUT_DIR_MISSING` observado após a Vercel detectar Next.js, usando o diretório padrão de build reconhecido pela integração.
+
+### Escopo
+- Remover `distDir: ".next-build"` de `next.config.ts` para usar `.next`.
+- Alinhar os caminhos de tipos em `next-env.d.ts` e `tsconfig.json` a `.next`.
+- Não alterar configurações, variáveis, domínios ou deployments no painel da Vercel.
+- Validar lint, typecheck, build e diff; executar testes disponíveis e registrar resultados; publicar em branch separada para revisão por PR.
+
+### Restrições
+- Não tocar diretamente em `main`.
+- Não incluir arquivos ou alterações locais fora do escopo.
+
+### Critérios de aceite
+- CA-11: o Next.js gera a saída em `.next`, consistente com o caminho esperado pela Vercel.
+- CA-12: checks aplicáveis passam e a alteração é publicada em branch própria com PR para `main`.
+
+### Evidência
+O log de `main` no commit `fa5671a` detectou Next.js 16.4.6, concluiu compilação, TypeScript e geração de rotas, mas terminou com `[NEXT_OUTPUT_DIR_MISSING]`, procurando `/vercel/path0/.next` enquanto `next.config.ts` definia `.next-build`.
+
+### Progresso
+- [x] Confirmar causa pelo log e configuração.
+- [x] Remover o diretório customizado e alinhar referências TypeScript.
+- [x] Build, lint e typecheck locais passaram.
+- [x] Suíte completa no checkout original falhou somente nos dois casos da fixture local não versionada `src/test/verifier-proof/catalog.test.ts`, que verifica deliberadamente um erro plantado fora do escopo. Ao excluir essa fixture, Vitest não encontrou outros testes e saiu com código 0. A fixture não faz parte desta branch.
+- [ ] Revisar o diff, enviar branch e abrir PR.
