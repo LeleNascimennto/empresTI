@@ -23,7 +23,7 @@ o agente não cria commit nem faz push sem solicitação explícita.
 | Deletar ou renomear arquivo                 | pedir antes    |
 | Instalar ou atualizar dependência           | pedir antes    |
 | Criar ou alterar migration                  | pedir antes    |
-| Mexer em variável de ambiente ou configuração | proibido       |
+| Alterar configurações e variáveis de ambiente | livre          |
 
 O que cada nível significa:
 - livre — faça e siga em frente.

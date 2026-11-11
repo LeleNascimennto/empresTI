@@ -34,34 +34,66 @@ Criar um subagente de verificação que avalia, com contexto limpo, se uma spec 
 
 ## Prova de erro plantado
 
-Para validar o comportamento do verificador, deve existir uma simulação intencional de falha em uma spec.
+Para validar o comportamento do verificador, executar uma simulação isolada de falha em uma spec. A falha fica em fixture temporária de teste, nunca no código de produto.
 
 ### Cenário
 
 - Spec com dois critérios de aceite:
   - CA-01: o catálogo mostra apenas itens disponíveis;
   - CA-02: itens em manutenção não aparecem como disponíveis.
-- Implementação de teste: uma alteração proposital que remove a filtragem de manutenção e não cria o teste correspondente para os critérios de aceite.
-- Objetivo: confirmar que o verificador reaproveita a regra de "sem evidência = reprova" e não aprova apenas pela aparência.
+- Fixture: uma função de catálogo intencionalmente defeituosa que deixa passar item em manutenção, acompanhada de testes dos dois critérios.
+- Objetivo: confirmar que o verificador relata a falha observada e não aprova a spec só porque há testes; depois, corrigir a fixture e confirmar que os testes passam.
 
-### Saída esperada do verificador
+### Evidência que deve ser registrada após a execução
 
-| CA | evidência (arquivo:linha do teste ou trecho relevante) | status | observação |
-|---|---|---|---|
-| CA-01 | inexistente | SEM TESTE | Falta evidência de que o catálogo lista apenas itens disponíveis |
-| CA-02 | inexistente | SEM TESTE | Nenhum teste valida que itens em manutenção não aparecem como disponíveis |
-
-Checks: npm test → falhou | npm run build → falhou
-Fora de escopo: nada encontrado
-Veredito: NÃO PRONTA — faltam evidências dos critérios de aceite e não há teste que comprove o comportamento
+- Saída real do subagente verificador durante a fixture defeituosa, incluindo tabela, checks e veredito.
+- Resultado do teste da fixture após a correção.
+- Confirmação de que os arquivos temporários foram removidos e que nenhum código do produto foi alterado pela simulação.
 
 ### Procedimento de verificação
 
-1. Plantar a falha intencional no código ou no teste.
-2. Executar a avaliação do verificador.
-3. Confirmar que o status final é "NÃO PRONTA".
-4. Desfazer a falha intencional.
-5. Executar novamente e confirmar que o resultado foi revertido para a avaliação normal.
+1. Criar uma fixture temporária com os critérios CA-01 e CA-02 e a filtragem de manutenção ausente.
+2. Executar os testes da fixture e pedir ao subagente que avalie somente esse cenário, sem editar nada.
+3. Confirmar que a saída real indica a falha e não declara a fixture pronta.
+4. Corrigir a função temporária e executar novamente os testes da fixture.
+5. Manter a fixture corrigida como caso reproduzível e registrar os resultados observados nesta seção.
+
+### Execução
+
+Executada em 11/11/2026 em fixture isolada, sem alterar código de produto.
+
+1. A fixture temporária foi criada em `src/test/verifier-proof/` com uma
+   implementação que retornava todos os equipamentos, inclusive manutenção.
+2. O teste direcionado falhou nos dois critérios:
+   - CA-01 esperava `["TI-0001"]`, mas recebeu `["TI-0001", "TI-0002"]`.
+   - CA-02 esperava `false` para presença de item em manutenção, mas recebeu
+     `true`.
+3. O subagente verificador avaliou `spec/verificador-erro-plantado.md` e
+   retornou:
+
+   | CA | evidência | status | observação |
+   |---|---|---|---|
+   | CA-01 | `src/test/verifier-proof/catalog.test.mjs:10-13`; implementação em `src/test/verifier-proof/catalog.ts:6-7` | REPROVADO | Esperava apenas `TI-0001`, mas também recebeu `TI-0002`. |
+   | CA-02 | `src/test/verifier-proof/catalog.test.mjs:17-20`; implementação em `src/test/verifier-proof/catalog.ts:6-7` | REPROVADO | O teste encontrou equipamento em manutenção (`true`, esperado `false`). |
+
+   Checks: `node --experimental-strip-types --test src/test/verifier-proof/catalog.test.mjs` → falhou (2 testes falharam; código de saída 1).
+   Fora de escopo: nada encontrado nos fixtures examinados.
+   Veredito: NÃO PRONTA — os dois critérios de aceite falharam.
+4. A função isolada foi corrigida para filtrar `conditionStatus === "AVAILABLE"`.
+   Reexecutado o mesmo comando: 2 testes passaram, 0 falharam, código de saída
+   0. A fixture corrigida foi mantida para tornar a evidência reproduzível.
+
+O comando `npm test -- src/test/verifier-proof/catalog.test.ts` não iniciou os
+workers do Vitest neste ambiente e terminou com timeout antes de descobrir
+testes. Por isso, a prova isolada usa o runner nativo do Node 22 e não altera
+dependências nem configuração do Vitest. A avaliação independente foi feita
+na versão defeituosa; após a correção, confirmou-se o retorno ao estado válido
+executando o mesmo teste, sem uma segunda rodada independente do subagente.
+
+Validação complementar: `npm test` terminou com `No test files found` (o
+Vitest está configurado apenas para `.test.ts`/`.test.tsx`); `npm run lint` e
+`npm run build` passaram. Para o check de whitespace em arquivos CRLF foi
+necessário `git -c core.whitespace=cr-at-eol diff --check`.
 
 ## Tarefas
 
@@ -69,7 +101,7 @@ Veredito: NÃO PRONTA — faltam evidências dos critérios de aceite e não há
 2. Criar o arquivo do subagente em `agents/`.
 3. Incluir as regras de leitura e o fluxo de verificação.
 4. Reforçar as proibições de edição e produção.
-5. Validar com um cenário de erro plantado e confirmar a resposta esperada.
+5. Validar com uma fixture isolada de erro plantado, registrar a saída real do verificador e comprovar que a correção remove a falha.
 
 ## Evidência de conclusão
 
