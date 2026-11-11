@@ -19,8 +19,10 @@ o agente não cria commit nem faz push sem solicitação explícita.
 - Aplicar migrations exclusivamente pelo workflow
   `.github/workflows/prisma-migrations.yml`, que executa
   `npx prisma migrate deploy` na branch `main`.
-- O workflow usa o segredo GitHub `DIRECT_URL` com conexão direta Supabase na
-  porta 5432. Nunca copiar o segredo para arquivos, mensagens ou logs.
+- O workflow usa o segredo GitHub `DIRECT_URL` na porta 5432. No runner sem
+  acesso IPv6, usar a URI **Session pooler** do mesmo projeto; ela ocupa o
+  campo `directUrl` do Prisma. Nunca copiar o segredo para arquivos, mensagens
+  ou logs.
 - Rodar manualmente em **Actions → Prisma migrations to Supabase** e marcar a
   confirmação de produção. Esperar o sucesso da migration antes de publicar
   código dependente do schema.

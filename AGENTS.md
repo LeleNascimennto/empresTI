@@ -57,9 +57,11 @@ não houver resposta, **pare e pergunte** — não invente comportamento.
 
 Estas regras já foram decididas por Operações e devem aparecer no código e na UI:
 
-1. **Limite de 3 itens** — cada pessoa pode ter no máximo 3 empréstimos ativos
-   ao mesmo tempo.
-2. **Prazo de 14 dias** — devolução prevista calculada a partir da retirada.
+1. **Limite de 5 itens** — cada pessoa pode ter no máximo 5 pedidos pendentes
+   de retirada e empréstimos ativos ao mesmo tempo.
+   Pedido pendente ocupa o item e expira após 24 horas úteis; o colaborador
+   pode cancelar ou confirmar a retirada em “Meus empréstimos”.
+2. **Prazo de 14 dias úteis** — devolução prevista calculada a partir da retirada, excluindo feriados nacionais brasileiros.
 3. **Atraso bloqueia** — quem tem item em atraso não pode solicitar outro.
 4. **Manutenção invisível** — equipamento em manutenção não aparece como
    disponível no catálogo.
@@ -171,7 +173,7 @@ input do cliente.
 - Contêm regras de negócio testáveis sem montar HTTP.
 - Recebem `tenant_id` já resolvido pelo procedimento.
 - Toda query/mutation de domínio filtra por `tenant_id`.
-- Exemplos de regras: limite de 3 itens, bloqueio por atraso, status de
+- Exemplos de regras: limite de 5 pedidos pendentes + empréstimos ativos, bloqueio por atraso, status de
   equipamento.
 
 ### Prisma e banco
@@ -234,7 +236,7 @@ Resumo para implementação:
 - Copy: português BR, seco e operacional; datas `dd/mmm` (ex.: `14/set`).
 - Estados visíveis: Disponível, Emprestado, Manutenção, Atraso (cores em
   `layout.md` §2.4).
-- Regras de negócio devem ser **visíveis na UI**: contador "2 de 3 itens",
+- Regras de negócio devem ser **visíveis na UI**: contador "2 de 5 itens",
   barra de prazo, bloqueio de solicitação por atraso, etc.
 
 ---

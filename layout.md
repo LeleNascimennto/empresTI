@@ -66,6 +66,9 @@ Base visual: design system **Nocturne** adaptado à primária `#001449`.
 | Disponível | `#5FD3AA` | `rgba(63,185,140,0.12)` | `rgba(63,185,140,0.35)` |
 | Emprestado | `#9AA3BC` | `#1A2340` | `#2B3450` |
 | Manutenção | `#E8B961` | `rgba(224,163,63,0.12)` | `rgba(224,163,63,0.35)` |
+
+“Aguardando retirada” é situação do pedido, não da condição física do
+equipamento; reutiliza a cor neutra de Emprestado e exibe a hora de expiração.
 | Atraso | `#F0A0A5` (rótulo `#E08A90`) | linha: `rgba(224,91,98,0.05)` | `rgba(224,91,98,0.4)` |
 
 ### 2.5 Cinzas de interface (rampa neutra)
@@ -255,6 +258,7 @@ Altura implícita por `padding:6px 12px`, raio 99px, 12px.
 Coluna: ícone 40×40 (raio 9px, fundo `#0B1128`, ícone 20px `#8AA6EE`) + pill de estado no canto oposto → nome 14.5px/600 → meta 12px `#7C86A2` → rodapé de 12px.
 - Disponível: rodapé "Solicitar →" em `#8AA6EE`, card clicável, hover `border-color:#3C5DBE`.
 - Emprestado: rodapé "Com {pessoa} · devolve {data}" em `#5E6884`, sem hover.
+- Aguardando retirada: pill neutra com a mesma cor semântica de Emprestado; rodapé "Pedido pendente · até {data/hora}" em `#5E6884`, sem ação e sem hover. A data/hora é o limite de expiração em `America/Sao_Paulo`.
 - Manutenção: rodapé com situação da assistência, sem hover.
 
 ### 5.5 Input
@@ -280,8 +284,8 @@ Backdrop `rgba(4,6,14,0.68)` cobrindo a tela, conteúdo centralizado. Caixa: 432
 
 ### 5.10 Indicadores de limite
 
-- Segmentos de 3 (limite de itens): três divs `flex:1; height:5px; border-radius:99px`, `gap:5px`; preenchidos `#5B7FE0`, vazios `#222C4A`.
-- Barra de prazo: trilha `height:4px; background:#222C4A; border-radius:99px; overflow:hidden`; preenchimento `#5B7FE0` na proporção de dias decorridos / 14.
+- Segmentos de 5 (limite de itens): cinco divs `flex:1; height:5px; border-radius:99px`, `gap:5px`; preenchidos `#5B7FE0`, vazios `#222C4A`.
+- Barra de prazo: trilha `height:4px; background:#222C4A; border-radius:99px; overflow:hidden`; preenchimento `#5B7FE0` na proporção de dias úteis decorridos / 14.
 
 ### 5.11 Ícones
 
@@ -295,23 +299,23 @@ Tamanhos: 12px (breadcrumb) · 13px (caret) · 15–16px (nav/marca) · 17px (he
 
 ### 01 · Login (1440×820)
 Split `560px | 1fr`.
-- **Esquerda** — hero em `linear-gradient(160deg,#001449,#00102F 60%,#080C1A)`, padding 56px, `justify-content:space-between`: marca no topo (ícone 34px, texto 16px) · bloco central com título 34px (máx. 20ch), subtítulo 14px `#93A0C6` (máx. 38ch), régua-marca esmaecida, dois números (3 itens por pessoa / 14 dias de prazo) com `gap:40px` · rodapé "Operações · v1" 11px.
+- **Esquerda** — hero em `linear-gradient(160deg,#001449,#00102F 60%,#080C1A)`, padding 56px, `justify-content:space-between`: marca no topo (ícone 34px, texto 16px) · bloco central com título 34px (máx. 20ch), subtítulo 14px `#93A0C6` (máx. 38ch), régua-marca esmaecida, dois números (5 itens por pessoa / 14 dias úteis de prazo) com `gap:40px` · rodapé "Operações · v1" 11px.
 - **Direita** — formulário centralizado de 372px, padding 56px: "Entrar" 22px/600, subtítulo 13px, campos e-mail + senha (`gap:18px`), botão primário 44px com `ph-arrow-right`, régua esmaecida, nota de suporte 12px centralizada.
 
 ### 02 · Catálogo (1440×900)
-Sidebar + header (busca, "2 de 3 itens com você", `ph-bell`).
-Conteúdo: H1 "Catálogo" + contagem ("32 equipamentos · 11 disponíveis agora") → **faixa de aviso de regras** (limite de 3, prazo de 14 dias, bloqueio por atraso, manutenção fora do catálogo) → chips de categoria + "Só disponíveis" à direita → grid 3×2 de cards mostrando os três estados.
+Sidebar + header (busca, "2 de 5 itens com você", `ph-bell`).
+Conteúdo: H1 "Catálogo" + contagem ("32 equipamentos · 11 disponíveis agora") → **faixa de aviso de regras** (limite de 5, prazo de 14 dias úteis, bloqueio por atraso, manutenção fora do catálogo) → chips de categoria + "Só disponíveis" à direita → grid 3×2 de cards mostrando os três estados.
 
 ### 03 · Detalhe do item (1440×900)
 Sidebar + header com breadcrumb (Catálogo › Notebooks › item) e contador à direita.
 Conteúdo `1fr 356px`:
 - Coluna principal: bloco de imagem 260px com ícone 64px → título 28px + pill de estado → descrição (máx. 60ch) → régua esmaecida → ficha técnica em 4 colunas (Categoria, Patrimônio, Local, Última devolução) → "Histórico" em linhas `data | evento | resultado`.
-- Coluna lateral: card **Solicitar empréstimo** (Retirada / Prazo padrão 14 dias / Devolver até — valor em `#B4C6F6` 600 — botão 44px + nota de retirada) e card **Seus itens** com "2 de 3", segmentos de limite e nota de status.
-- Sobreposto: diálogo de confirmação (§5.9) com o prazo calculado e o aviso de que o colaborador chegará a 3 de 3.
+- Coluna lateral: card **Solicitar empréstimo** (pedido pendente de retirada / prazo de 14 dias úteis após confirmar retirada / botão 44px + nota explicativa) e card **Seus itens** com "2 de 5", segmentos de limite e nota de status.
+- Sobreposto: diálogo de confirmação (§5.9) informa que o pedido ocupará o equipamento e avisa quando chegar ao limite de 5 de 5.
 
 ### 04 · Meus empréstimos (1440×820)
 Sidebar + header com breadcrumb simples e botão "Pegar emprestado".
-Conteúdo: cabeçalho "Comigo agora" + "2 de 3 itens · nenhum em atraso" com segmentos de limite (180px) à direita → duas linhas de empréstimo (ícone 44px | nome + meta | prazo com barra | botão "Devolver") → régua esmaecida → tabela **Histórico** (Item / Retirada / Devolução / Situação) com "No prazo" verde e atraso em âmbar.
+Conteúdo: cabeçalho "Comigo agora" + "2 de 5 itens · nenhum em atraso" com segmentos de limite (180px) à direita → linhas de pedidos/itens ativos. Pedido pendente mostra "Aguardando retirada", botão contornado "Confirmar retirada" e ação secundária "Cancelar pedido"; retirada confirmada mostra prazo de 14 dias úteis e barra de prazo. Loading usa skeletons das linhas; erro mostra mensagem curta e ação "Tentar novamente"; lista vazia mostra "Nenhum pedido em aberto". Em viewport estreito, as linhas empilham conteúdo e ações sem rolagem horizontal. Histórico/devolução seguem fora do escopo desta etapa.
 
 ### 05 · Operações — empréstimos em aberto (1440×900)
 Sidebar (usuário = "Operações · Balcão · 2º andar") + header com busca ampliada e "Cadastrar equipamento".
@@ -333,7 +337,7 @@ Conteúdo `1fr 320px`:
 - **Badge de contagem** em "Meus empréstimos": pill `padding:1px 7px`, fundo `#132663`, texto `#B4C6F6` 11px, `margin-left:auto`.
 - **Breadcrumb** no header das telas de profundidade 2 (03 e 06): links em `#8AA6EE`, separador `ph-caret-right` 12px, item atual em `#E6EAF6`.
 - Fluxos: Catálogo → card disponível → Detalhe → diálogo de confirmação → Meus empréstimos. Meus empréstimos → "Pegar emprestado" → Catálogo. Operações → "Cadastrar equipamento" → tela 06.
-- O contador "2 de 3 itens com você" aparece no header do Catálogo e do Detalhe.
+- O contador "2 de 5 itens com você" aparece no header do Catálogo e do Detalhe.
 - Neste layout as telas são estáticas e ligadas por âncoras (`#s1`…`#s6`); em implementação real, rotas: `/login`, `/catalogo`, `/catalogo/:patrimonio`, `/meus-emprestimos`, `/operacoes/emprestimos`, `/operacoes/equipamentos/novo`.
 
 ---
@@ -360,8 +364,8 @@ Regras: nunca animar `box-shadow` de moldura; nada acima de 240ms; respeitar `@m
 
 ## 9. Regras de negócio visíveis na interface
 
-1. **Máximo de 3 itens por pessoa** — contador no header ("2 de 3 itens com você"), segmentos de limite no detalhe e em Meus empréstimos, aviso no diálogo quando a solicitação leva ao terceiro item.
-2. **Prazo padrão de 14 dias** — data calculada no card de solicitação ("Devolver até 14/set"), barra de progresso por item, coluna "Prazo" em Operações.
+1. **Máximo de 5 itens por pessoa** — contador no header ("2 de 5 itens com você"), segmentos de limite no detalhe e em Meus empréstimos, aviso no diálogo quando a solicitação alcança o quinto item.
+2. **Prazo padrão de 14 dias úteis** — data calculada após confirmar a retirada ("Devolver até 14/set"), barra de progresso por item, coluna "Prazo" em Operações.
 3. **Atraso bloqueia novo empréstimo** — linha tingida em vermelho suave, card de estatística "Em atraso" com borda vermelha, botão "Solicitar" desabilitado (`opacity:.45`) com nota explicativa quando houver atraso.
 4. **Manutenção não fica disponível** — pill âmbar, card sem ação, e nota no controle "Situação inicial" do cadastro.
 5. Fora de escopo v1 (não desenhar): reserva com data futura, notificação por e-mail, importação de planilha.

@@ -33,3 +33,14 @@ schema.
 - CA-WF-04: documentação lista o segredo e o passo para iniciar a ação.
 - CA-WF-05: workflow validado por inspeção/YAML; não executar produção sem
   autorização separada para acionar a ação.
+
+## Incidente de conectividade — execução 42995051030
+
+O job chegou a `prisma migrate deploy`, mas falhou com `P1001` ao tentar o
+endpoint `db.<ref>.supabase.co:5432`. O aviso do runner Ubuntu não causou a
+falha. O endpoint direto do Supabase usa IPv6 no plano sem IPv4 adicional.
+Para CI sem acesso IPv6, o segredo `DIRECT_URL` pode receber a URI **Session
+pooler** do mesmo projeto na porta 5432. O campo Prisma continua sendo
+`directUrl`, e as migrations continuam pelo Prisma Migrate. Não usar o pooler
+Transaction da porta 6543 para migrations. A correção exige que a usuária
+substitua o segredo no GitHub sem publicar seu valor.

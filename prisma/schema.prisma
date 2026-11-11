@@ -45,16 +45,21 @@ model Membership {
 }
 
 model Equipment {
-  id              String             @id @default(uuid()) @db.Uuid
-  tenantId        String             @map("tenant_id") @db.Uuid
-  assetTag        String             @map("asset_tag")
-  name            String
-  category        String
-  conditionStatus EquipmentCondition @default(AVAILABLE) @map("condition_status")
-  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  loans           Loan[]
+  id                   String             @id @default(uuid()) @db.Uuid
+  tenantId             String             @map("tenant_id") @db.Uuid
+  assetTag             String             @map("asset_tag")
+  name                 String
+  category             String
+  imageUrl             String?            @map("image_url")
+  imageSourceUrl       String?            @map("image_source_url")
+  imageProviderPhotoId String?            @unique @map("image_provider_photo_id")
+  imagePhotographer    String?            @map("image_photographer")
+  imageLicense         String?            @map("image_license")
+  conditionStatus      EquipmentCondition @default(AVAILABLE) @map("condition_status")
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  loans                Loan[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, assetTag])
@@ -62,15 +67,19 @@ model Equipment {
 }
 
 model Loan {
-  id             String     @id @default(uuid()) @db.Uuid
-  tenantId       String     @map("tenant_id") @db.Uuid
-  equipmentId    String     @map("equipment_id") @db.Uuid
-  borrowerUserId String     @map("borrower_user_id") @db.Uuid
-  checkedOutAt   DateTime   @default(now()) @map("checked_out_at") @db.Timestamptz(6)
-  dueAt          DateTime   @map("due_at") @db.Timestamptz(6)
-  returnedAt     DateTime?  @map("returned_at") @db.Timestamptz(6)
-  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  equipment      Equipment  @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  equipmentId    String    @map("equipment_id") @db.Uuid
+  borrowerUserId String    @map("borrower_user_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt      DateTime? @map("expires_at") @db.Timestamptz(6)
+  checkedOutAt   DateTime? @map("checked_out_at") @db.Timestamptz(6)
+  dueAt          DateTime? @map("due_at") @db.Timestamptz(6)
+  returnedAt     DateTime? @map("returned_at") @db.Timestamptz(6)
+  cancelledAt    DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  expiredAt      DateTime? @map("expired_at") @db.Timestamptz(6)
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  equipment      Equipment @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
 
   @@index([tenantId, borrowerUserId, returnedAt])
   @@index([tenantId, dueAt])

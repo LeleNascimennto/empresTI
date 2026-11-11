@@ -8,7 +8,7 @@ Modelar e implementar o schema de persistência mínimo para a v1 do EmpresTI, c
 - Registrar decisões ainda em aberto no PRD que afetam o modelo, incluindo ciclo de solicitação/retirada, histórico de devoluções e provisionamento por convite.
 - Produzir schema Prisma, migration PostgreSQL e seed local após resolver as decisões de negócio e obter aprovação do DDL.
 - A pedido explícito do usuário, verificar novamente a conexão e, se disponível, aplicar a migration inicial versionada ao Supabase remoto via Prisma Migrate.
-- Validar a proposta contra as regras de limite de 3 empréstimos ativos, prazo de 14 dias, bloqueio por atraso, manutenção e isolamento de tenant.
+- Validar a proposta contra as regras atuais: limite de 5 pedidos pendentes + empréstimos ativos, prazo de 14 dias úteis, bloqueio por atraso, manutenção e isolamento de tenant.
 
 ## Restrições
 - Não editar `.env`.
