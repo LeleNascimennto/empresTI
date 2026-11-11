@@ -1,0 +1,78 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --page: #05070f;
+  --color-bg: #080c1a;
+  --sidebar-bg: #060a16;
+  --color-surface: #0e1530;
+  --surface-sunken: #0b1128;
+  --color-text: #e6eaf6;
+  --text-muted: #8a93b2;
+  --text-dim: #7c86a2;
+  --text-faint: #5e6884;
+  --border-frame: #222c4a;
+  --border-card: #1f2949;
+  --border-soft: #1a2340;
+  --border-row: #161d33;
+  --border-strong: #2b3450;
+  --accent-500: #5b7fe0;
+  --accent-600: #3c5dbe;
+  --accent-800: #132663;
+  --accent-900: #001449;
+}
+
+html {
+  min-height: 100%;
+  background: var(--page);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--page);
+  color: var(--color-text);
+  font-family: "Open Sans", sans-serif;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+svg {
+  display: block;
+}
+
+::selection {
+  background: rgba(91, 127, 224, 0.3);
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent-500);
+  outline-offset: 2px;
+}
+
+a {
+  color: #8aa6ee;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #b4c6f6;
+}
