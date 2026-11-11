@@ -50,4 +50,4 @@ Restaurar a validação Zod de `DATABASE_URL` e `DIRECT_URL` no primeiro uso da 
 - CA-10: checks aplicáveis passam e as mudanças são enviadas para a branch do PR #2.
 
 ### Estado
-Implementada e validada localmente em 10/11/2026. `createTRPCContext()` chama `getEnv()` somente para usuário autenticado e antes de consultar `memberships`; importação de módulos continua sem validação eager. Typecheck, lint, build e `git diff --check` passaram. Testes não executados conforme escopo. Commit e push para `chore/nocturne-layout-setup` pendentes.
+Implementada e validada localmente em 10/11/2026. `createTRPCContext()` chama `getEnv()` somente para usuário autenticado e antes de consultar `memberships`; importação de módulos continua sem validação eager. Typecheck, lint, build e `git diff --check` passaram. Testes não executados conforme escopo. Correção enviada para `chore/nocturne-layout-setup` no commit `0c1376a`; verificação Vercel iniciada e ainda pendente.
