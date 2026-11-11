@@ -2,6 +2,7 @@ import "server-only";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { getEnv } from "@/env";
 import { prisma } from "@/server/db";
 import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -10,6 +11,9 @@ export async function createTRPCContext() {
   const { data } = await supabase.auth.getClaims();
   const subject = data?.claims?.sub;
   const userId = typeof subject === "string" ? subject : null;
+  if (userId) {
+    getEnv();
+  }
   const memberships = userId
     ? await prisma.membership.findMany({
         where: { userId },
