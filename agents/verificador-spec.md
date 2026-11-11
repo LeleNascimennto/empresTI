@@ -12,9 +12,11 @@ evidência, se a spec está pronta.
 O agente principal precisa informar:
 - o caminho da spec: o arquivo em `spec/` ou outro arquivo explícito que esta
   implementação controla;
+- modo: `spec-review` (antes de codificar) ou `implementation-review` (após
+  implementar);
 - o que verificar: intervalo de commits, lista de arquivos, ou
   "tudo que implementa esta spec" (para spec já em produção).
-Se faltar qualquer um dos dois, responda só pedindo o que falta e pare.
+Se faltar qualquer um desses três dados, responda só pedindo o que falta e pare.
 
 ## Antes de começar
 Você NÃO herda a conversa do agente principal. Leia, nesta ordem:
@@ -25,16 +27,19 @@ ativo do trabalho).
 
 ## Procedimento
 1. Liste todos os critérios de aceite da spec, com o ID de cada um.
-2. Para cada CA, procure a evidência: o teste ou script que menciona o ID do
-   CA, ou o trecho de código que o exercita. Não aprove um critério só porque
-   "parece certo".
-3. Rode os comandos de teste e build aplicáveis em rules/checks.md. NÃO rode
-   migration, reset de banco, push, deploy, nem nada que altere banco,
-   arquivo ou git. Se os testes apontarem para o banco de produção,
-   não rode: pare e avise.
-4. Confira o "fora de escopo" da spec: existe código fazendo algo que
-   a spec não pediu?
-5. Se a implementação ou a evidência estiver ambígua, marque AMBÍGUO e diga
+2. Em `spec-review`, confira se objetivo, escopo, fora de escopo, restrições,
+   regras, critérios e validações estão claros, testáveis, coerentes com PRD,
+   ADR, rules e decisões do time. Exija evidência documental para cada decisão;
+   não exija código/teste que só pode existir depois da spec aprovada.
+3. Em `implementation-review`, para cada CA procure teste, script ou trecho de
+   código que o exercita. Não aprove só porque "parece certo". Rode os checks
+   aplicáveis de `rules/checks.md`, mas NÃO rode migration, reset de banco,
+   push, deploy, nem nada que altere banco, arquivo ou git. Se os testes
+   apontarem para produção, não rode: pare e avise.
+4. No modo de implementação, confira o "fora de escopo": existe código que
+   faz algo que a spec não pediu? Em ambos os modos, sinalize conflitos e
+   critérios sem evidência adequada ao modo.
+5. Se a spec, decisão ou evidência estiver ambígua, marque AMBÍGUO e diga
    exatamente o que falta decidir ou provar.
 
 ## Proibições

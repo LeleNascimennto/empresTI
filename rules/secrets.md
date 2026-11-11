@@ -48,13 +48,16 @@ Validação no boot: Zod em `src/env.ts` (ADR-001).
    `src/lib/supabase/client.ts`. Supabase com `service_role` fica em
    `src/lib/supabase/server.ts` ou equivalente server-only.
 
-5. **Variável nova existe em TRÊS lugares ou em nenhum:**
-   - `.env` (sua máquina, **nunca versionado**)
-   - `.env.example` (versionado, placeholder sem valor real)
-   - painel da Vercel (Preview e Production)
+5. **Classifique a variável pelo ambiente em que roda:**
+   - App/runtime: `.env` local, `.env.example` com placeholder e os ambientes
+     Vercel que realmente executam esse código.
+   - Ferramenta local de preparação/desenvolvimento: `.env` local (nunca
+     versionado) e `.env.example` com placeholder; não adicionar à Vercel nem
+     ao schema `src/env.ts` se o app não a utiliza.
 
-   Ao criar uma variável, diga na resposta em quais dos três lugares
-   você já colocou e o que falta o time fazer à mão na Vercel.
+   Ao criar uma variável, diga onde ela é usada e em quais arquivos/ambientes
+   ela foi configurada. Segredos locais de ferramentas não devem ser copiados
+   para ambientes de produção.
 
 6. **Validação:** toda variável obrigatória entra no schema Zod de
    `src/env.ts`. Falhar no boot é preferível a `undefined` silencioso

@@ -13,6 +13,22 @@ Git, commits, branches, push e deploy seguem [AGENTS.md](../AGENTS.md) e
 [rules/spec-flow.md](spec-flow.md). Este arquivo não substitui essas regras:
 o agente não cria commit nem faz push sem solicitação explícita.
 
+## Migrations no Supabase de produção
+> leitor: agente
+
+- Aplicar migrations exclusivamente pelo workflow
+  `.github/workflows/prisma-migrations.yml`, que executa
+  `npx prisma migrate deploy` na branch `main`.
+- O workflow usa o segredo GitHub `DIRECT_URL` na porta 5432. No runner sem
+  acesso IPv6, usar a URI **Session pooler** do mesmo projeto; ela ocupa o
+  campo `directUrl` do Prisma. Nunca copiar o segredo para arquivos, mensagens
+  ou logs.
+- Rodar manualmente em **Actions → Prisma migrations to Supabase** e marcar a
+  confirmação de produção. Esperar o sucesso da migration antes de publicar
+  código dependente do schema.
+- Não aplicar `migration.sql` pelo conector Supabase, CLI Supabase ou SQL Editor;
+  Prisma Migrate continua sendo o dono do schema.
+
 ## Autorização por tipo de ação
 > leitor: agente
 

@@ -1,0 +1,65 @@
+name: Prisma migrations to Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_production:
+        description: Apply all pending Prisma migrations to the production Supabase database
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prisma-production-migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    if: ${{ inputs.confirm_production }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Require the main branch
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Run production migrations from the main branch only."
+            exit 1
+          fi
+
+      - name: Verify direct database secret
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        shell: bash
+        run: |
+          if [[ -z "$DIRECT_URL" ]]; then
+            echo "::error::Configure the DIRECT_URL repository secret before running migrations."
+            exit 1
+          fi
+          if [[ "$DIRECT_URL" != *":5432/"* ]]; then
+            echo "::error::DIRECT_URL must use the Supabase direct connection on port 5432."
+            exit 1
+          fi
+
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Apply pending Prisma migrations
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
+        run: npx prisma migrate deploy

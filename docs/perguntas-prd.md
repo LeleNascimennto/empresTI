@@ -10,7 +10,7 @@
    tipo: técnica
    por que importa: define se é preciso um job agendado (cron) recalculando status, ou se basta comparar a data de devolução prevista contra a data atual sempre que a informação for consultada.
 
-3. Colaborador pode cancelar uma solicitação antes de retirar o equipamento fisicamente, ou "solicitar" já significa que o item está emprestado?
+3. **RESOLVIDA pela usuária (2026-11-11):** colaborador pode cancelar antes da retirada. A solicitação cria pedido pendente que ocupa o equipamento por até 24 horas úteis; o colaborador confirma a retirada em `Meus empréstimos`, iniciando o prazo, ou cancela antes disso. Pedidos pendentes contam no limite de cinco junto aos empréstimos ativos.
    tipo: negócio
    por que importa: se existir uma etapa intermediária, o sistema precisa de um estado a mais (solicitado → retirado → devolvido) em vez do simples disponível/emprestado hoje implícito no PRD.
 

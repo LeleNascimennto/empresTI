@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { EquipmentCatalog } from "@/components/equipment-catalog";
 
 export default function CatalogPage() {
-  return <PlaceholderPage title="Catálogo" />;
+  return <EquipmentCatalog />;
 }
