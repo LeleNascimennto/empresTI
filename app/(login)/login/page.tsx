@@ -34,11 +34,11 @@ export default async function LoginPage() {
 
           <div className="flex gap-10 border-t border-[#5B7FE0]/30 pt-6">
             <p className="flex flex-col gap-1 text-xs text-[#9AA3BC]">
-              <strong className="text-[24px] font-semibold text-[#E6EAF6]">3 itens</strong>
+              <strong className="text-[24px] font-semibold text-[#E6EAF6]">5 itens</strong>
               por pessoa
             </p>
             <p className="flex flex-col gap-1 text-xs text-[#9AA3BC]">
-              <strong className="text-[24px] font-semibold text-[#E6EAF6]">14 dias</strong>
+              <strong className="text-[24px] font-semibold text-[#E6EAF6]">14 dias úteis</strong>
               de prazo
             </p>
           </div>

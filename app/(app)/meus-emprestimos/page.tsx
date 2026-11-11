@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { MyLoans } from "@/components/my-loans";
 
 export default function MyLoansPage() {
-  return <PlaceholderPage title="Meus empréstimos" />;
+  return <MyLoans />;
 }

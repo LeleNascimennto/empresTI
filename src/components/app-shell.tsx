@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/sign-out-button";
 
 const navItems = [
@@ -55,16 +58,19 @@ function BrandMark() {
 }
 
 export function AppShell({ email, children }: { email: string; children: ReactNode }) {
+  const pathname = usePathname();
+  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#080C1A] text-[#E6EAF6]">
       <div className="mx-auto flex min-h-screen max-w-[1440px]">
-        <aside className="w-[236px] shrink-0 border-r border-[#1A2340] bg-[#060A16] p-[22px_14px]">
+        <aside className="hidden w-[236px] shrink-0 border-r border-[#1A2340] bg-[#060A16] p-[22px_14px] md:flex">
           <div className="flex flex-col gap-8">
             <BrandMark />
 
             <nav className="flex flex-col gap-1" aria-label="Navegação principal">
               {navItems.map(({ href, label, icon }) => {
-                const isActive = href === "/catalogo";
+                const isActive = pathname === href || pathname.startsWith(`${href}/`);
                 return (
                   <Link
                     key={href}
@@ -100,14 +106,25 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-[#1A2340] bg-[#080C1A]/80 px-6 py-4 backdrop-blur-sm">
-            <div className="flex items-center gap-3 text-[#9AA3BC]">
+          <header className="flex min-h-[68px] items-center justify-between gap-3 border-b border-[#1A2340] bg-[#080C1A]/80 px-4 py-3 backdrop-blur-sm sm:px-6">
+            <div className="hidden items-center gap-3 text-[#9AA3BC] md:flex">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-[8px] border border-[#2B3450] bg-[#0B1128] text-[#8AA6EE]">
                 <svg viewBox="0 0 256 256" className="h-4 w-4 fill-current" aria-hidden="true">
                   <path d="M128 24c57.6 0 104 46.4 104 104s-46.4 104-104 104S24 185.6 24 128 70.4 24 128 24ZM80 108h96v16H80v-16Zm0 32h96v16H80v-16Z" />
                 </svg>
               </span>
               <span className="text-[12px] uppercase tracking-[0.12em]">Operações</span>
+            </div>
+
+            <div className="flex items-center gap-3 md:hidden">
+              <BrandMark />
+              <button
+                type="button"
+                aria-expanded={mobileNavigationOpen}
+                aria-controls="mobile-navigation"
+                onClick={() => setMobileNavigationOpen((open) => !open)}
+                className="rounded-lg border border-[#2B3450] px-3 py-2 text-xs text-[#B4C6F6]"
+              >{mobileNavigationOpen ? "Fechar menu" : "Menu"}</button>
             </div>
 
             <div className="flex items-center gap-3">
@@ -124,7 +141,24 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
             </div>
           </header>
 
-          <main className="flex-1 p-6 sm:p-8 lg:p-10">
+          {mobileNavigationOpen && (
+            <nav id="mobile-navigation" className="grid grid-cols-2 gap-2 border-b border-[#1A2340] bg-[#060A16] p-3 md:hidden" aria-label="Navegação principal">
+              {navItems.map(({ href, label }) => {
+                const isActive = pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMobileNavigationOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`rounded-lg border px-3 py-2 text-xs ${isActive ? "border-[#25408F] bg-[#132663] text-[#E6EAF6]" : "border-[#1F2949] text-[#9AA3BC]"}`}
+                  >{label}</Link>
+                );
+              })}
+            </nav>
+          )}
+
+          <main className="min-w-0 flex-1 p-4 sm:p-8 lg:p-10">
             <div className="mx-auto w-full max-w-[1120px]">{children}</div>
           </main>
         </div>

@@ -2,9 +2,9 @@ import "server-only";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { getEnv } from "@/env";
-import { prisma } from "@/server/db";
-import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
+import { getEnv } from "../../env";
+import { prisma } from "../db";
+import { createClient as createSupabaseServerClient } from "../../lib/supabase/server";
 
 export async function createTRPCContext() {
   const supabase = await createSupabaseServerClient();
@@ -15,10 +15,13 @@ export async function createTRPCContext() {
     getEnv();
   }
   const memberships = userId
-    ? await prisma.membership.findMany({
-        where: { userId },
-        select: { tenantId: true, role: true },
-        take: 2,
+    ? await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT set_config('app.user_id', ${userId}, true)`;
+        return tx.membership.findMany({
+          where: { userId },
+          select: { tenantId: true, role: true },
+          take: 2,
+        });
       })
     : [];
   const membership = memberships.length === 1 ? memberships[0] : null;

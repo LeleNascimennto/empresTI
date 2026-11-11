@@ -20,8 +20,10 @@ registrada se alguém lembrar de atualizar a linha.
 5. Tela de Operações com todos os empréstimos em aberto.
 
 ## Regras que Operações já decidiu
-- Cada pessoa pode estar com no máximo 3 itens ao mesmo tempo.
-- O prazo padrão de devolução é de 14 dias.
+- Cada pessoa pode ter no máximo 5 pedidos pendentes de retirada e empréstimos ativos ao mesmo tempo.
+- Pedidos pendentes ocupam o equipamento e expiram após 24 horas úteis; o colaborador também pode cancelá-los antes da retirada ou confirmar a retirada em “Meus empréstimos”.
+- O prazo padrão de devolução é de 14 dias úteis, contados a partir da retirada;
+  fins de semana e feriados nacionais brasileiros não entram na contagem.
 - Quem tem item em atraso não pode pegar outro emprestado.
 - Equipamento em manutenção não aparece como disponível.
 
