@@ -52,31 +52,81 @@ Restaurar a validação Zod de `DATABASE_URL` e `DIRECT_URL` no primeiro uso da 
 ### Estado
 Implementada e validada localmente em 10/11/2026. `createTRPCContext()` chama `getEnv()` somente para usuário autenticado e antes de consultar `memberships`; importação de módulos continua sem validação eager. Typecheck, lint, build e `git diff --check` passaram. Testes não executados conforme escopo. Correção enviada para `chore/nocturne-layout-setup` no commit `0c1376a`; verificação Vercel iniciada e ainda pendente.
 
+## Continuação: novo erro no deploy de Production
+
+### Evidência
+O log enviado em 10/11/2026 é de `main` no commit `805e193`, não da branch `chore/nocturne-layout-setup`. Compilação e TypeScript passaram; durante coleta de configuração de `/api/trpc/[trpc]`, Zod reportou `DATABASE_URL` e `DIRECT_URL` ausentes.
+
+### Próxima ação
+Cadastrar ambas como variáveis `Secret` no ambiente Production do Vercel, com os valores correspondentes do projeto Supabase, e iniciar novo deploy. Se também desejar testar a branch Preview, as variáveis necessárias devem existir também em Preview, usando uma base de desenvolvimento quando possível.
+
+## Continuação: erro de diretório de saída
+
+### Evidência
+No novo log de `main`/`805e193`, Prisma Client gerou, Next compilou, TypeScript passou e as páginas foram geradas. A etapa final falhou com `[STATIC_BUILD_NO_OUT_DIR] No Output Directory named "dist" found`. `next.config.ts` define `distDir: ".next-build"`; o painel do Vercel está configurado para procurar `dist`.
+
+### Próxima ação
+Naquele momento, a hipótese era remover o override `dist` e permitir a detecção automática do Next.js. A sugestão de definir `.next-build` manualmente foi preliminar e ficou superada pelo log posterior `NEXT_OUTPUT_DIR_MISSING`.
+
+### Status posterior
+O check do PR #2 (`f37edfb`) agora está `success` e tem Preview publicado. O status do commit de Production em `main` (`805e193`) continua `failure`. Portanto, o 404 no domínio de produção pode estar ligado à implantação de produção ainda malsucedida; confirmar a URL exata do 404 antes de atribuir causa.
+
+## Continuação: página 404 do Vercel
+
+### Objetivo
+Determinar se o 404 informado ocorre no domínio público da aplicação ou na URL de uma implantação e comparar com o status atual dos deployments.
+
+### Escopo e restrições
+- Consulta somente leitura a status GitHub/Vercel público e ao domínio conhecido `empresti-delta.vercel.app`.
+- Não alterar código, variáveis, aliases, domínios ou configuração do Vercel.
+
+### Estado
+Em investigação; usuário informou `404 NOT_FOUND` com request ID `gru1::km826-1794364411399-40139e323b2c`, sem indicar a URL que exibiu a página.
+
+## Continuação: URL publicada retorna 404
+
+### Objetivo
+Investigar o `404 NOT_FOUND` exibido na URL publicada e identificar a ação mínima para publicar a aplicação corretamente.
+
+### Evidências
+- `app/page.tsx` existe e redireciona `/` para `/login`; o projeto não está sem rota raiz.
+- `next.config.ts` configura `distDir: ".next-build"` e o `package.json` executa `next build --webpack`.
+- O diagnóstico anterior registrou que o build da Vercel chegou à etapa final, mas falhou procurando o diretório `dist` (`[STATIC_BUILD_NO_OUT_DIR]`).
+- O erro 404 genérico, sem URL e log da implantação atual, não identifica sozinho se o alias aponta para uma implantação falha ou se a configuração mudou desde o log anterior.
+
+### Restrição
+O contrato do projeto proíbe o agente de alterar as configurações da Vercel. Não abrir nem modificar `.env`, secrets, configurações de produção ou deployments.
+
+### Próxima ação
+No projeto Vercel, conferir **Settings → Build and Deployment**: selecionar framework **Next.js**, manter o comando de build `npm run build` (ou `prisma generate && next build --webpack`) e remover o override de **Output Directory** (`dist`); deixar o Next.js detectar sua saída. Em seguida, criar um novo deployment a partir do commit que contém a correção. Se ainda falhar, usar o log desse deployment para revisar as variáveis de ambiente necessárias sem compartilhá-las publicamente.
+
+### Estado
+Diagnóstico do código concluído; correção do painel/deployment bloqueada pela regra do repositório que proíbe alterar configuração da Vercel. A spec não declara a publicação resolvida até o novo deployment passar e a URL abrir a aplicação.
+
 ## Continuação: alinhar diretório de build com Vercel
 
 ### Objetivo
-Corrigir o erro `NEXT_OUTPUT_DIR_MISSING` observado após a Vercel detectar Next.js, usando o diretório padrão de build reconhecido pela integração.
+Corrigir o novo erro `NEXT_OUTPUT_DIR_MISSING` no deploy, usando o diretório padrão do Next.js reconhecido pela integração da Vercel.
 
 ### Escopo
-- Remover `distDir: ".next-build"` de `next.config.ts` para usar `.next`.
-- Alinhar os caminhos de tipos em `next-env.d.ts` e `tsconfig.json` a `.next`.
-- Não alterar configurações, variáveis, domínios ou deployments no painel da Vercel.
-- Validar lint, typecheck, build e diff; executar testes disponíveis e registrar resultados; publicar em branch separada para revisão por PR.
+- Remover `distDir: ".next-build"` de `next.config.ts` para voltar ao padrão `.next`.
+- Alinhar os caminhos gerados em `next-env.d.ts` e `tsconfig.json` ao padrão `.next`.
+- Manter as configurações de projeto da Vercel sem override de Output Directory.
+- Validar lint, build e diff antes de enviar a mudança em branch e abrir PR, sem deploy manual nem alteração no painel.
 
 ### Restrições
-- Não tocar diretamente em `main`.
-- Não incluir arquivos ou alterações locais fora do escopo.
+- Não alterar `main` diretamente, variáveis, domínios, secrets, configurações da Vercel ou dados remotos.
+- Preservar alterações locais não relacionadas à correção e não incluir arquivos fora do escopo no PR.
 
 ### Critérios de aceite
-- CA-11: o Next.js gera a saída em `.next`, consistente com o caminho esperado pela Vercel.
-- CA-12: checks aplicáveis passam e a alteração é publicada em branch própria com PR para `main`.
+- CA-11: a configuração Next.js usa o diretório padrão `.next`, compatível com o caminho esperado pelo adapter da Vercel.
+- CA-12: lint, build e `git diff --check` passam, e a correção é publicada em branch própria para revisão via PR.
 
-### Evidência
-O log de `main` no commit `fa5671a` detectou Next.js 16.4.6, concluiu compilação, TypeScript e geração de rotas, mas terminou com `[NEXT_OUTPUT_DIR_MISSING]`, procurando `/vercel/path0/.next` enquanto `next.config.ts` definia `.next-build`.
+### Evidência e estado
+O log mais recente, do commit `fa5671a` em `main`, detectou Next.js 16.4.6 e concluiu compilação, TypeScript e geração de rotas; falhou depois com `[NEXT_OUTPUT_DIR_MISSING]`, procurando `/vercel/path0/.next` enquanto `next.config.ts` ainda define `.next-build`. A orientação anterior de apontar Output Directory para `.next-build` não se aplica à integração detectada: deixar o override desligado e remover `distDir` permite que o Next use `.next`.
 
 ### Progresso
-- [x] Confirmar causa pelo log e configuração.
-- [x] Remover o diretório customizado e alinhar referências TypeScript.
-- [x] Build, lint e typecheck locais passaram.
-- [x] Suíte completa no checkout original falhou somente nos dois casos da fixture local não versionada `src/test/verifier-proof/catalog.test.ts`, que verifica deliberadamente um erro plantado fora do escopo. Ao excluir essa fixture, Vitest não encontrou outros testes e saiu com código 0. A fixture não faz parte desta branch.
-- [ ] Revisar o diff, enviar branch e abrir PR.
+- [x] Confirmar causa pelo log e pela configuração local.
+- [x] Remover `distDir` e deixar o build atualizar os caminhos de tipos para `.next`.
+- [x] Rodar lint e build; ambos passaram. O `git diff --check` global apontou apenas whitespace preexistente em `spec/verificador-subagente.md`; validar somente os arquivos da correção.
+- [ ] Commitar e enviar em branch separada; abrir PR.
