@@ -1,12 +1,89 @@
 # Spec: dados iniciais de equipamentos
 
-## Objetivo
+## Publicação autorizada — 2026-11-16
+
+A usuária confirmou os 12 patrimônios, nomes, categorias e situações da lista
+original, aprovou a seleção das 12 imagens e pediu sua publicação no Supabase
+com as alterações do repositório. Esta autorização substitui a restrição
+anterior desta spec de preparação exclusivamente local para esses 12 registros
+e arquivos. A publicação deve preservar dados existentes, usar o projeto
+Supabase já conectado e verificar o resultado por leitura.
+
+Tarefas em ordem: conferir projeto, schema e Storage; registrar as 12 fotos como
+`approved` no manifesto; publicar os JPEGs no bucket público
+`equipment-images`; carregar idempotentemente `suporte_ti` e os 12 equipamentos
+com URLs e metadados das imagens; conferir as 12 linhas e URLs públicas;
+validar código e enviar a branch ao GitHub. Não criar usuário ou senha do
+professor nesta etapa porque nenhuma identidade específica foi fornecida.
+
+Critérios de aceite: os 12 dados correspondem exatamente à lista enviada; há
+12 imagens únicas do Pixabay no Storage e acessíveis; as 12 linhas pertencem
+ao tenant `suporte_ti` e apontam para as imagens corretas; repetir a carga não
+duplica registros; nenhum segredo é versionado; checks aplicáveis passam.
+
+Resultado verificado em produção: bucket público `equipment-images` com 12
+objetos; tenant `suporte_ti` com 12 equipamentos, 12 IDs de foto distintos e
+12 URLs vinculadas. TI-0004, TI-0007 e TI-0010 estão em manutenção. A carga e o
+upload foram repetidos sem duplicação ou substituição de arquivo diferente.
+Os IDs aprovados estão versionados em
+`scripts/equipment-image-selections.json`; o manifesto e os JPEGs são gerados
+localmente a partir da API e permanecem fora do Git.
+O projeto ainda tem zero usuários Auth e zero memberships; acesso do professor
+permanece como tarefa posterior.
+
+## Etapa de imagens — 2026-11-15
+
+Objetivo imediato: buscar pela API Pixabay as fotos dos 12 patrimônios,
+selecionar uma foto adequada e exclusiva por item, gerar JPEGs 800 × 600 e
+um manifesto com origem, autor, licença e estado de revisão.
+
+Escopo: preparação local dos arquivos e validação visual. Não carregar arquivos
+no Storage nem alterar dados de produção nesta etapa. A chave fica somente no
+`.env` local, fora do Git; URLs de busca que contenham a chave não entram em
+logs ou artefatos.
+
+Critérios de aceite desta etapa: 12 imagens únicas obtidas pela API Pixabay;
+fotos sem pessoas, marcas ou texto legível; JPEGs 800 × 600 inspecionados;
+manifesto completo; ausência da chave nos arquivos versionados. O manifesto
+permanece `needs_human_review` até a aprovação humana antes de qualquer carga.
+
+Estado inicial: as três migrations já foram aplicadas e verificadas no
+Supabase. Neste checkout não há `.env` nem `PIXABAY_API_KEY` no ambiente do
+processo; a usuária foi orientada a disponibilizar a chave localmente para
+permitir a busca. A preparação restante continua independente do banco remoto.
+
+A chave foi localizada no `.env` da pasta principal do repositório e é usada
+diretamente no processo local, sem cópia para este checkout. A primeira busca
+de TI-0007 trouxe sobretudo notebooks; a busca desse patrimônio foi refinada
+para identificar um monitor real. A revisão visual inicial rejeitou as fotos
+de TI-0005, TI-0006 e TI-0012 por marcas legíveis, e TI-0009 por mostrar outro
+tipo de conector. As buscas desses quatro patrimônios foram refinadas.
+Uma segunda revisão rejeitou novamente a câmera por mostrar pessoa ou marca;
+a busca de TI-0012 foi refinada para encontrar vista traseira sem logo.
+Foi selecionada uma foto da vista traseira de uma câmera compacta, sem pessoa
+nem logomarca aparente. Os rótulos pequenos dos botões foram apresentados à
+usuária, que aprovou a seleção das 12 imagens antes da publicação.
+
+Resultado desta etapa: `artifacts/equipment-images/` contém 12 JPEGs locais
+800 × 600, a folha `review-sheet.jpg`, `selections.json` e `manifest.json`.
+Os 12 IDs Pixabay são distintos e todos os registros do manifesto estão
+`approved`. O diretório é ignorado pelo Git; os JPEGs foram publicados no
+Storage público e os metadados foram carregados no banco.
+
+## Histórico do plano inicial (substituído pela publicação acima)
+
+As seções abaixo preservam as decisões e propostas de 11/11/2026 como registro
+do processo SDD. As restrições de não publicar e os critérios sobre execução
+exclusivamente manual foram substituídos pela autorização de 16/11/2026; os
+critérios ativos desta etapa estão na seção “Publicação autorizada”.
+
+### Objetivo original
 
 Preparar uma carga repetível dos 12 equipamentos definidos em
 `pratica/pratica-sdd-subagentes.html`, com fotos revisadas via Pixabay e a
 membership do professor, sem gravar em produção pelo agente.
 
-## Atualização de escopo — 2026-11-11
+### Atualização de escopo — 2026-11-11
 
 A usuária pediu que as imagens do Pixabay apareçam no catálogo e que o agente
 execute operações no Supabase. A interface já consome `imageUrl`; o gerador
@@ -16,7 +93,7 @@ Prisma pelo fluxo de CI, e o agente não grava dados diretamente no Supabase.
 O banco foi consultado somente para leitura e retornou zero tabelas públicas e
 zero migrations visíveis.
 
-## Escopo
+### Escopo original
 
 - Criar/upsert local dos 12 equipamentos por `(tenant_id, asset_tag)`.
 - Estados conforme decisão explícita da usuária em 2026-11-11 (resposta à
@@ -53,7 +130,7 @@ zero migrations visíveis.
   UUID já existente, vincula-o como colaborador e falha se houver empréstimos;
   não cria senha, não cria usuário remoto e não apaga dados.
 
-## Schema proposto (DDL aprovado em 2026-11-11)
+### Schema proposto (DDL aprovado em 2026-11-11)
 
 Adicionar ao model `Equipment`: `imageUrl String? @map("image_url")`,
 `imageSourceUrl String? @map("image_source_url")`,
@@ -69,13 +146,13 @@ protegida por tenant/RLS. A usuária fará upload manual para bucket público de
 Storage depois que bucket e URLs estiverem configurados; o agente não grava no
 Supabase remoto.
 
-## Fora de escopo
+### Fora de escopo original
 
 Catálogo UI, criação de usuário/senha Auth, limpeza de dados existentes e
 execução da carga remota pelo agente. A carga e o upload em produção são
 preparados para execução exclusiva da usuária, conforme a prática.
 
-## Critérios de aceite
+### Critérios de aceite originais, substituídos
 
 - CA-DI-01: os 12 patrimônios, nomes/categorias/situações são exatos à lista
   padronizada; conflito TI-0010 fica registrado.
@@ -100,7 +177,7 @@ preparados para execução exclusiva da usuária, conforme a prática.
   exigência da flag e da confirmação digitada, sem executar contra banco remoto.
   Testes de imagem provam formato/dimensões e IDs únicos.
 
-## Riscos / validação
+### Riscos / validação originais
 
 - A usuária informa UUID local do usuário do professor; senha não entra no seed.
 - A atividade exige os dados em produção, mas proíbe escrita pelo agente. A
