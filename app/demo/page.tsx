@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Image, { type ImageLoaderProps } from "next/image";
+
+function publicStorageImageLoader({ src }: ImageLoaderProps) {
+  return src;
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 
 const items = [
   ["TI-0001", "Notebook 14 polegadas", "notebook", false],
@@ -90,7 +97,9 @@ export default function DemoPage() {
               const state = loans[tag];
               const available = !maintenance && !state;
               return <article key={tag} className="flex flex-col gap-4 rounded-xl border border-[#2B3450] bg-[#0E1530] p-5">
-                <div className="flex h-28 items-center justify-center rounded-lg bg-[#080C1A] text-xs text-[#7280A5]">Imagem em preparação</div>
+                <div className="relative flex h-28 items-center justify-center overflow-hidden rounded-lg bg-[#080C1A] text-xs text-[#7280A5]">
+                  {supabaseUrl ? <Image src={`${supabaseUrl}/storage/v1/object/public/equipment-images/${tag}.jpg`} alt={name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" loader={publicStorageImageLoader} unoptimized className="object-cover" /> : "Imagem indisponível"}
+                </div>
                 <div><p className="text-xs uppercase tracking-wider text-[#9AA3BC]">{tag} · {category}</p><h3 className="mt-1 text-lg font-semibold">{name}</h3></div>
                 <span className="text-sm text-[#9AA3BC]">{maintenance ? "Manutenção" : state === "pending" ? "Aguardando retirada" : state === "active" ? "Emprestado" : "Disponível"}</span>
                 {available && <button className="rounded-lg border border-[#5B7FE0] px-4 py-2 text-sm text-[#B4C6F6] disabled:opacity-50" disabled={activeCount >= 5} onClick={() => setLoans((current) => ({ ...current, [tag]: "pending" }))} type="button">{activeCount >= 5 ? "Limite de 5 itens" : "Solicitar empréstimo"}</button>}

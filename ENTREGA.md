@@ -1,10 +1,29 @@
 # EmpresTI — entrega da prática SDD e subagentes
 
-Data do registro: 11/11/2026.
+Registro inicial: 11/11/2026. Atualização: 16/11/2026.
 
-**Situação: entrega parcial.** Há código preparado e uma demonstração com dados
-fictícios. A aplicação real ainda depende de migrations, carga de equipamentos,
-imagens e validação integrada. Este documento não certifica funcionamento em produção.
+**Situação: entrega parcial.** As migrations e a carga dos 12 equipamentos com
+imagens Pixabay já foram aplicadas ao Supabase. Ainda faltam o usuário real do
+professor, seu vínculo ao tenant e a validação dos fluxos autenticados na Vercel.
+Este documento não certifica funcionamento completo em produção.
+
+## Atualização verificada em 16/11/2026
+
+- Supabase: três migrations Prisma aplicadas; RLS ativo na tabela interna de
+  migrations, sem acesso dos papéis públicos.
+- Storage: bucket público `equipment-images` com 12 JPEGs aprovados, únicos e
+  acessíveis por URL pública.
+- Banco: tenant `suporte_ti`, 12 equipamentos, 12 fotos vinculadas, nove itens
+  disponíveis e três em manutenção (TI-0004, TI-0007, TI-0010). A carga foi
+  repetida sem duplicar registros.
+- Auth: zero usuários e zero memberships. A demonstração `/demo` continua
+  separada do acesso real.
+- Scripts de publicação com modo prévio e confirmação explícita:
+  `scripts/publish-equipment-images.mjs` e
+  `prisma/seed-practice-production.mjs`.
+
+Os estados descritos abaixo como “pendente” são registros históricos da
+preparação de 11/11; a lista de pendências no fim já reflete esta atualização.
 
 ## Objetivo e tecnologia
 
@@ -42,16 +61,16 @@ pedidos; manutenção impede solicitação; os dados reais exigem isolamento por
 |---|---|---|
 | Fluxo SDD | [Regras](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/rules/spec-flow.md), [spec da prática](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/spec/pratica-sdd-subagentes.md) | Documentado; aceite global ainda pendente |
 | Subagente verificador | [Contrato](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/agents/verificador-spec.md) | Configurado para avaliar critérios e reportar falhas, sem corrigir nem operar em produção |
-| Skill de imagens | [Skill Pixabay](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/skills/imagens-equipamentos/SKILL.md), [script](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/scripts/prepare-equipment-images.mjs) | Preparados; fotos reais ainda não carregadas ou revisadas |
-| Dados iniciais | [Spec](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/spec/dados-iniciais.md), [seed](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/prisma/seed.ts) | Preparados para execução local; carga remota não concluída |
-| Schema | [Prisma](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/prisma/schema.prisma), [migration](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/prisma/migrations/20261111000100_add_pending_loan_flow_and_equipment_images/migration.sql) | Versionados; aplicação remota pendente |
+| Skill de imagens | [Skill Pixabay](skills/imagens-equipamentos/SKILL.md), [preparo](scripts/prepare-equipment-images.mjs), [seleções](scripts/equipment-image-selections.json) | 12 fotos aprovadas e publicadas no Storage |
+| Dados iniciais | [Spec](spec/dados-iniciais.md), [seed local](prisma/seed.ts), [carga de produção](prisma/seed-practice-production.mjs) | Tenant e 12 equipamentos carregados; membership do professor pendente |
+| Schema | [Prisma](prisma/schema.prisma), [migrations](prisma/migrations/) | Três migrations aplicadas no Supabase |
 | Catálogo e pedidos | [Catálogo](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/src/components/equipment-catalog.tsx), [meus empréstimos](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/src/components/my-loans.tsx), [service](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/src/server/services/loans.ts) | Código preparado; validação integrada pendente |
-| Workflow de migrations | [GitHub Actions](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/.github/workflows/prisma-migrations.yml), [instruções](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/docs/deploy-migrations.md) | Preparado; última tentativa de conexão falhou |
-| Demonstração sem banco | [Página](app/demo/page.tsx), [spec](spec/demo-sem-banco.md) | Implementada e revisada pelo verificador |
+| Workflow de migrations | [GitHub Actions](.github/workflows/prisma-migrations.yml), [instruções](docs/deploy-migrations.md) | Executado com sucesso na `main` |
+| Demonstração sem banco | [Página](app/demo/page.tsx), [spec](spec/demo-sem-banco.md) | Fluxos fictícios; fotos públicas exibidas após deploy desta branch |
 
 Os 12 equipamentos previstos vão de TI-0001 a TI-0012: quatro notebooks,
 três monitores, três cabos e duas câmeras. A demonstração inclui esses itens,
-mas utiliza espaços reservados para imagens.
+e passa a mostrar as fotos públicas após o deploy desta branch.
 
 ## Como apresentar a demonstração
 
@@ -99,12 +118,12 @@ históricos; não foram repetidos para esta alteração exclusivamente documenta
 
 ## Pendências para o aceite completo
 
-- [ ] Corrigir a conexão do workflow e aplicar as migrations pelo Prisma Migrate.
-      Seguir as [instruções de migrations](https://github.com/LeleNascimennto/empresTI/blob/c7362c88b9afb86684182c1b8b9fae25a0836f51/docs/deploy-migrations.md); usar o
-      Session pooler do mesmo projeto na porta 5432 quando o runner não alcançar IPv6.
-- [ ] Obter e revisar as 12 imagens pela API Pixabay, registrar origem/licença
-      e preparar os dados para carga. A chave não estava disponível neste checkout.
-- [ ] Concluir a carga dos equipamentos pelo fluxo autorizado e validar o vínculo das imagens.
+- [x] Corrigir a conexão do workflow e aplicar as migrations pelo Prisma Migrate.
+      Três migrations constam como aplicadas no projeto Supabase.
+- [x] Obter e revisar as 12 imagens pela API Pixabay, registrar origem/licença
+      e preparar os dados para carga. A chave foi lida da pasta principal do
+      repositório e não foi copiada para este checkout ou versionada.
+- [x] Concluir a carga dos equipamentos pelo fluxo autorizado e validar o vínculo das imagens.
 - [ ] Provisionar e validar o acesso real com usuário e membership no tenant correto.
 - [ ] Finalizar cadastro de equipamentos, tela de Operações e devolução real.
 - [ ] Rodar testes com PostgreSQL, isolamento de tenant e fluxos críticos de interface.

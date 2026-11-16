@@ -105,6 +105,42 @@ async function loadCachedResults(item) {
   return hits;
 }
 
+async function loadPhotoById(photoId) {
+  const cachePath = path.join(cacheDirectory, `photo-${photoId}.json`);
+  try {
+    const cache = JSON.parse(await readFile(cachePath, "utf8"));
+    if (Date.now() - cache.cachedAt < cacheDurationMs && isPhoto(cache.hit)) {
+      return cache.hit;
+    }
+  } catch {
+    // Missing or invalid cache is refreshed below.
+  }
+
+  const url = new URL("https://pixabay.com/api/");
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("id", String(photoId));
+
+  let response;
+  try {
+    response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+  } catch {
+    throw new Error(`Pixabay não respondeu à foto ${photoId}.`);
+  }
+  if (!response.ok) throw new Error(`Pixabay recusou a foto ${photoId} (HTTP ${response.status}).`);
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error(`Pixabay retornou dados inválidos para a foto ${photoId}.`);
+  }
+  const hit = payload?.hits?.find((candidate) => candidate.id === photoId && isPhoto(candidate));
+  if (!hit) throw new Error(`Foto ${photoId} não encontrada na API Pixabay.`);
+  await mkdir(cacheDirectory, { recursive: true });
+  await writeFile(cachePath, JSON.stringify({ cachedAt: Date.now(), hit }, null, 2));
+  return hit;
+}
+
 async function search() {
   const candidates = {};
   for (const [index, item] of equipment.entries()) {
@@ -157,10 +193,7 @@ async function download(selectionFile) {
     seenIds.add(selectedId);
 
     const hits = await loadCachedResults(item);
-    const selected = hits.find((hit) => hit.id === selectedId);
-    if (!selected) {
-      throw new Error(`O ID Pixabay escolhido para ${item.assetTag} não está nos resultados em cache; rode --search novamente.`);
-    }
+    const selected = hits.find((hit) => hit.id === selectedId) ?? await loadPhotoById(selectedId);
 
     let response;
     try {
